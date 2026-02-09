@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
 import { MapPin, Search, ChevronRight, ChevronDown, Flag, Plus, Trash2, RotateCcw, Save } from 'lucide-react';
 import dynamic from 'next/dynamic';
+
+// Dynamically import the Map component with SSR disabled
+const TrackDetailMap = dynamic(() => import('@/components/TrackDetailMap'), {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-gray-500">Loading Map...</div>
+});
 
 // Mock Data for Sidebar
 const COUNTRIES = [
@@ -30,12 +34,6 @@ const SELECTED_TRACK = {
         [-6.5350, 106.8528], [-6.5348, 106.8522], [-6.5352, 106.8515],
         [-6.5360, 106.8520]
     ]
-};
-
-const MapController = ({ center }: { center: number[] }) => {
-    const map = useMap();
-    map.setView(center as [number, number], 17);
-    return null;
 };
 
 export default function TrackDetailsPage() {
@@ -109,28 +107,10 @@ export default function TrackDetailsPage() {
                 </div>
 
                 {/* Map */}
-                <MapContainer
-                    center={SELECTED_TRACK.center as [number, number]}
-                    zoom={17}
-                    className="w-full h-full z-0"
-                    style={{ background: '#1a1a1a' }}
-                    zoomControl={false}
-                >
-                    <TileLayer
-                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                        attribution='&copy; Esri'
-                    />
-                    <MapController center={SELECTED_TRACK.center} />
-
-                    <Polyline
-                        positions={SELECTED_TRACK.path as [number, number][]}
-                        pathOptions={{ color: 'yellow', weight: 6, opacity: 0.8 }}
-                    />
-                    <Polyline
-                        positions={SELECTED_TRACK.path as [number, number][]}
-                        pathOptions={{ color: 'white', weight: 2, opacity: 0.5, dashArray: '5, 10' }}
-                    />
-                </MapContainer>
+                <TrackDetailMap
+                    center={SELECTED_TRACK.center}
+                    path={SELECTED_TRACK.path}
+                />
 
                 {/* Bottom Sector Toolbar */}
                 <div className="absolute bottom-0 left-0 right-0 bg-white/95 p-2 z-[500] flex flex-col gap-2 border-t border-black/10">
