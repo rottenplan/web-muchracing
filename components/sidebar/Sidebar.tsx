@@ -2,109 +2,44 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LayoutDashboard, User, Smartphone, Map, BarChart2, Settings, ChevronDown, ChevronRight, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { Home, AreaChart, Info, Smartphone, Globe, BarChart3, Wrench, Menu } from 'lucide-react';
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const [tracksOpen, setTracksOpen] = useState(pathname.startsWith('/tracks'));
-    const [toolsOpen, setToolsOpen] = useState(false);
 
     return (
-        <div className="w-64 bg-[#212529] text-[#adb5bd] flex flex-col h-screen fixed left-0 top-0 border-r border-black/10 z-50">
+        <div className="w-[60px] bg-[#212529] flex flex-col h-screen fixed left-0 top-0 border-r border-black/10 z-50">
             {/* Header/Brand */}
-            <div className="h-14 flex items-center px-4 bg-[#1a1e21] border-b border-white/5">
-                <span className="font-bold text-white text-lg tracking-wider">Navigation</span>
+            <div className="h-14 flex items-center justify-center bg-[#1a1e21] border-b border-white/5">
+                <Menu className="text-[#00aced]" size={20} />
             </div>
 
-            <div className="flex-1 overflow-y-auto py-2">
-                <NavItem href="/" icon={<Home size={18} />} label="Homepage" active={pathname === '/'} />
-                <NavItem href="/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" active={pathname === '/dashboard'} />
-                <NavItem href="/account" icon={<User size={18} />} label="My account" active={pathname === '/account'} />
-                <NavItem href="/devices" icon={<Smartphone size={18} />} label="My Device" active={pathname === '/devices'} />
-
-                {/* Tracks Group */}
-                <div className="mt-2">
-                    <button
-                        onClick={() => setTracksOpen(!tracksOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-sm font-medium"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Map size={18} />
-                            <span>Tracks</span>
-                        </div>
-                        {tracksOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    </button>
-
-                    {tracksOpen && (
-                        <div className="bg-[#1a1e21] py-1">
-                            <SubNavItem href="/tracks" label="Track database" active={pathname === '/tracks'} />
-                            <SubNavItem href="/tracks/details" label="Track details" active={pathname === '/tracks/details'} />
-                            <SubNavItem href="/tracks/create" label="Create new track" active={pathname === '/tracks/create'} highlight />
-                        </div>
-                    )}
-                </div>
-
-                <NavItem href="/sessions" icon={<BarChart2 size={18} />} label="My Session" active={pathname.startsWith('/sessions')} />
-
-                {/* Tools Group */}
-                <div className="mt-1">
-                    <button
-                        onClick={() => setToolsOpen(!toolsOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-sm font-medium"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Settings size={18} />
-                            <span>Tools & settings</span>
-                        </div>
-                        {toolsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    </button>
-
-                    {toolsOpen && (
-                        <div className="bg-[#1a1e21] py-1">
-                            <SubNavItem href="/settings/categories" label="Manage categories" active={pathname === '/settings/categories'} />
-                            <SubNavItem href="/tools/gpx-to-geojson" label="GPX To GeoJson" active={pathname === '/tools/gpx-to-geojson'} />
-                        </div>
-                    )}
-                </div>
+            <div className="flex-1 py-4 flex flex-col items-center gap-1 group">
+                <IconNavItem href="/" icon={<Home size={22} />} active={pathname === '/'} />
+                <IconNavItem href="/dashboard" icon={<AreaChart size={22} />} active={pathname === '/dashboard'} />
+                <IconNavItem href="/account" icon={<Info size={22} />} active={pathname === '/account'} />
+                <IconNavItem href="/devices" icon={<Smartphone size={22} />} active={pathname === '/devices'} />
+                <IconNavItem href="/tracks" icon={<Globe size={22} />} active={pathname.startsWith('/tracks')} />
+                <IconNavItem href="/sessions" icon={<BarChart3 size={22} />} active={pathname.startsWith('/sessions')} />
+                <IconNavItem href="/settings/categories" icon={<Wrench size={22} />} active={pathname.startsWith('/settings')} />
             </div>
         </div>
     );
 }
 
-function NavItem({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
+function IconNavItem({ href, icon, active }: { href: string; icon: React.ReactNode; active: boolean }) {
     return (
         <Link
             href={href}
             className={`
-        flex items-center gap-3 px-4 py-3 text-sm font-medium border-l-4 transition-colors
+        w-[60px] h-[50px] flex items-center justify-center transition-colors
         ${active
-                    ? 'bg-[#2c3034] text-white border-[#17a2b8]'
-                    : 'border-transparent hover:bg-white/5 hover:text-white'
+                    ? 'bg-[#2c3034] text-white'
+                    : 'text-[#adb5bd] hover:bg-white/5 hover:text-white'
                 }
       `}
         >
             {icon}
-            <span>{label}</span>
-        </Link>
-    );
-}
-
-function SubNavItem({ href, label, active, highlight }: { href: string; label: string; active: boolean; highlight?: boolean }) {
-    return (
-        <Link
-            href={href}
-            className={`
-        flex items-center gap-3 px-4 py-2 pl-12 text-xs transition-colors
-        ${active
-                    ? 'text-white font-medium'
-                    : 'text-[#adb5bd] hover:text-white'
-                }
-        ${highlight ? 'text-white' : ''}
-      `}
-        >
-            {highlight && <span className="text-[#17a2b8] font-bold text-lg leading-none mb-1">+</span>}
-            <span>{label}</span>
         </Link>
     );
 }

@@ -12,7 +12,7 @@ export default function DashboardLayout({
             <Sidebar />
 
             {/* Main Content */}
-            <div className="flex-1 ml-64 flex flex-col min-h-screen">
+            <div className="flex-1 ml-[60px] flex flex-col min-h-screen">
                 <TopBar />
                 <main className="flex-1 p-6 relative">
                     {children}
