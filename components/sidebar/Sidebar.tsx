@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const [tracksOpen, setTracksOpen] = useState(true);
+    const [tracksOpen, setTracksOpen] = useState(pathname.startsWith('/tracks'));
     const [toolsOpen, setToolsOpen] = useState(false);
 
     return (
