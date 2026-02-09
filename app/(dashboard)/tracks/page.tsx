@@ -1,23 +1,13 @@
 'use client';
 
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap, LayersControl } from 'react-leaflet';
-import { useEffect, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import { MapPin, Info, ArrowRight, Activity, Lightbulb } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-// Fix for Leaflet icons in Next.js
-const FixLeafletIcon = () => {
-    useEffect(() => {
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        });
-    }, []);
-    return null;
-};
+// Dynamically import the Map component with SSR disabled
+const TracksDatabaseMap = dynamic(() => import('@/components/TracksDatabaseMap'), {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-[#aad3df] flex items-center justify-center text-gray-500">Loading Tracks Map...</div>
+});
 
 // Mock Data for Global Tracks
 const MOCK_TRACKS = [
@@ -88,53 +78,8 @@ export default function TracksDatabasePage() {
 
             {/* Map Area */}
             <div className="flex-1 bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden relative min-h-[500px]">
-                <MapContainer
-                    center={[20, 0] as [number, number]}
-                    zoom={2}
-                    className="w-full h-full z-0"
-                    style={{ background: '#aad3df' }}
-                    minZoom={2}
-                >
-                    <LayersControl position="topright">
-                        <LayersControl.BaseLayer checked name="OpenStreetMap">
-                            <TileLayer
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                attribution='&copy; OpenStreetMap contributors'
-                            />
-                        </LayersControl.BaseLayer>
-                        <LayersControl.BaseLayer name="Satellite">
-                            <TileLayer
-                                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                                attribution='&copy; Esri'
-                            />
-                        </LayersControl.BaseLayer>
-                    </LayersControl>
-
-                    <FixLeafletIcon />
-
-                    {MOCK_TRACKS.map((track) => (
-                        <CircleMarker
-                            key={track.id}
-                            center={[track.lat, track.lng]}
-                            radius={6}
-                            pathOptions={{
-                                fillColor: '#17a2b8',
-                                fillOpacity: 0.8,
-                                color: 'white',
-                                weight: 2
-                            }}
-                        >
-                            <Popup>
-                                <div className="text-center">
-                                    <h3 className="font-bold text-sm">{track.name}</h3>
-                                    <p className="text-xs text-gray-500">{track.country}</p>
-                                </div>
-                            </Popup>
-                        </CircleMarker>
-                    ))}
-                </MapContainer>
+                <TracksDatabaseMap tracks={MOCK_TRACKS} />
             </div>
         </div>
     );
 }
-
