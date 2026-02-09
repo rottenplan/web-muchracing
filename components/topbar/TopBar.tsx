@@ -11,10 +11,6 @@ export default function TopBar() {
         <div className="h-14 bg-[#212529] border-b border-black/10 flex items-center justify-between px-4 sticky top-0 z-40">
             {/* Left: Breadcrumb / Title */}
             <div className="flex items-center gap-4">
-                <button className="text-[#adb5bd] hover:text-white transition-colors">
-                    <Menu size={20} />
-                </button>
-
                 <div className="flex items-center gap-2 text-sm text-[#adb5bd]">
                     <span className="font-semibold text-white">FoxLap - Dashboard</span>
                 </div>
