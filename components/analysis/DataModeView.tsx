@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     Play,
     Pause,
@@ -24,8 +24,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    AreaChart,
-    Area,
     ReferenceLine
 } from 'recharts';
 
@@ -36,26 +34,64 @@ interface DataModeViewProps {
 
 export default function DataModeView({ session, selectedLaps }: DataModeViewProps) {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
+    const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
-    // Mock data for charts - in reality this would come from session telemetry
+    // Process session points into chart data
+    const points = session?.points || [];
+    const laps = session?.laps || [];
+
+    // Playback Logic
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isPlaying && currentPointIndex < points.length - 1) {
+            interval = setInterval(() => {
+                setCurrentPointIndex(prev => {
+                    if (prev >= points.length - 1) {
+                        setIsPlaying(false);
+                        return prev;
+                    }
+                    return prev + 1;
+                });
+            }, 100); // 10Hz playback
+        }
+        return () => clearInterval(interval);
+    }, [isPlaying, currentPointIndex, points.length]);
+
+    const currentPoint = points[currentPointIndex] || {};
+
+    // Map Telemetry Data for Charts
     const chartData = useMemo(() => {
-        return Array.from({ length: 100 }).map((_, i) => ({
-            time: i,
-            speed: 60 + Math.sin(i / 5) * 20 + Math.random() * 5,
-            rpm: 8000 + Math.sin(i / 3) * 1500 + Math.random() * 200,
-            delta: Math.sin(i / 10) * 200,
-            water: 85 + Math.random() * 2,
-            egt: 650 + Math.random() * 10,
-        }));
-    }, []);
+        if (!points || points.length === 0) return [];
 
-    // Mock Laps based on screenshots
-    const lapDetails = [
-        { id: 2, time: '01:02.405', dist: 249.3, speed: 57.8, rpm: 85, water: 72, egt: 68, gap: '+107 ms', color: '#00aced' },
-        { id: 4, time: '01:02.266', dist: 250.5, speed: 56.6, rpm: 70, water: 65, egt: 55, gap: '0 ms', color: '#ff00ff' },
-        { id: 5, time: '01:02.397', dist: 248.4, speed: 58.8, rpm: 92, water: 78, egt: 82, gap: '+151 ms', color: '#00ffa2' },
-    ];
+        // If laps are selected, we might want to overlay them. 
+        // For simplicity now, let's show the whole session or selected portion.
+        return points.map((p: any, i: number) => ({
+            index: i,
+            time: p.time,
+            speed: p.speed || 0,
+            rpm: p.rpm || 0,
+            // Add other fields as needed
+        }));
+    }, [points]);
+
+    // Format Lap Details for Table
+    const lapDetails = useMemo(() => {
+        if (!laps) return [];
+
+        const bestTime = Math.min(...laps.map((l: any) => l.lapTime));
+
+        return laps.map((l: any) => ({
+            id: l.lapNumber,
+            time: formatLapTime(l.lapTime),
+            dist: l.distance || 0,
+            speed: l.maxSpeed || 0,
+            rpm: l.maxRpm || 0,
+            water: l.avgWater || 0, // Assuming these fields exist or we calculate them
+            egt: l.avgEgt || 0,
+            gap: l.lapTime === bestTime ? '0 ms' : `+${Math.round((l.lapTime - bestTime) * 1000)} ms`,
+            color: getColorForLap(l.lapNumber)
+        }));
+    }, [laps]);
 
     return (
         <div className="flex-1 flex flex-col bg-[#1a1a1a] overflow-hidden text-white font-sans">
@@ -65,87 +101,90 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     {/* Professional Timer */}
                     <div className="flex flex-col">
                         <div className="bg-[#f0ad4e] text-black px-5 py-2 font-mono text-3xl font-black rounded shadow-[0_4px_0_0_#b07d32] tracking-widest min-w-[180px] text-center">
-                            00:13.397
+                            {currentPoint.time || '00:00.000'}
                         </div>
-                        <span className="text-[10px] text-[#adb5bd] mt-1 font-bold uppercase tracking-tighter">Waktu Saat Ini</span>
+                        <span className="text-[10px] text-[#adb5bd] mt-1 font-bold uppercase tracking-tighter text-center">Waktu Telemetri</span>
                     </div>
 
                     {/* Playback Controls */}
                     <div className="bg-[#2c3034] rounded-lg border border-white/10 flex items-center p-1.5 gap-1 shadow-inner">
-                        <ControlButton icon={<SkipBack size={18} />} title="Awal" />
+                        <ControlButton icon={<SkipBack size={18} />} title="Awal" onClick={() => setCurrentPointIndex(0)} />
                         <button
                             onClick={() => setIsPlaying(!isPlaying)}
                             className="w-10 h-10 bg-[#f0ad4e] text-black rounded-md flex items-center justify-center shadow-lg hover:bg-orange-400 transition-all active:scale-95"
                         >
                             {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                         </button>
-                        <ControlButton icon={<SkipForward size={18} />} title="Akhir" />
+                        <ControlButton icon={<SkipForward size={18} />} title="Akhir" onClick={() => setCurrentPointIndex(points.length - 1)} />
                         <div className="w-px h-6 bg-white/10 mx-2"></div>
-                        <ControlButton icon={<RotateCcw size={16} />} title="Reset" />
+                        <ControlButton icon={<RotateCcw size={16} />} title="Reset" onClick={() => setCurrentPointIndex(0)} />
                         <ControlButton icon={<Settings size={16} />} title="Pengaturan" />
                         <ControlButton icon={<Maximize2 size={16} />} title="Layar Penuh" />
                     </div>
 
                     {/* Mini Map Navigation Preview */}
                     <div className="hidden lg:block w-32 h-20 bg-black/40 rounded border border-white/5 relative overflow-hidden group">
-                        <div className="absolute inset-0 opacity-30 bg-[url('https://mt1.google.com/vt/lyrs=s&x=1&y=1&z=1')] bg-center bg-cover"></div>
+                        <div className="absolute inset-0 opacity-30 bg-black"></div>
                         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full p-2">
-                            <path d="M20,50 C30,10 70,10 80,40 S 70,80 50,70 S 20,90 20,50" fill="none" stroke="#00aced" strokeWidth="4" />
-                            <circle cx="20" cy="50" r="4" fill="white" />
+                            {/* Simple path logic if we have points */}
+                            <polyline
+                                points={points.slice(0, 50).map((p: any) => `${(p.lng % 0.01) * 10000},${(p.lat % 0.01) * 10000}`).join(' ')}
+                                fill="none" stroke="#5bc0de" strokeWidth="2"
+                            />
                         </svg>
-                        <div className="absolute bottom-1 right-2 text-[8px] text-[#adb5bd] font-bold uppercase">Sentul Ciruit</div>
+                        <div className="absolute bottom-1 right-2 text-[8px] text-[#adb5bd] font-bold uppercase">{session.trackName || 'Sentul Circuit'}</div>
                     </div>
                 </div>
 
                 {/* Professional Data Table */}
-                <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl">
-                    <div className="bg-[#2c3034] grid grid-cols-8 gap-4 px-4 py-2 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
+                <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl overflow-x-auto">
+                    <div className="bg-[#2c3034] min-w-[800px] grid grid-cols-8 gap-4 px-4 py-2 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
                         <div className="flex items-center gap-2"><Trophy size={10} /> LAP</div>
                         <div className="flex items-center gap-2"><Gauge size={10} /> Waktu</div>
                         <div className="flex items-center gap-2"><MapPin size={10} /> Jarak</div>
-                        <div className="flex items-center gap-2"><Zap size={10} /> Kecepatan</div>
-                        <div className="flex items-center gap-2"><Activity size={10} /> RPM</div>
+                        <div className="flex items-center gap-2"><Zap size={10} /> Speed Max</div>
+                        <div className="flex items-center gap-2"><Activity size={10} /> RPM Max</div>
                         <div className="flex items-center gap-2"><Thermometer size={10} /> Water</div>
                         <div className="flex items-center gap-2"><Thermometer size={10} /> EGT</div>
                         <div className="flex items-center gap-2"><BarChart3 size={10} /> Gap</div>
                     </div>
 
-                    <div className="divide-y divide-white/5">
+                    <div className="divide-y divide-white/5 min-w-[800px]">
                         {lapDetails.map((lap) => (
-                            <div key={lap.id} className="bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.02] transition-colors group">
+                            <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.02] transition-colors group ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
                                 <div className="text-sm font-sans font-bold flex items-center gap-2">
                                     <div className="w-1 h-4 rounded-full" style={{ backgroundColor: lap.color }}></div>
                                     <span style={{ color: lap.color }}>LAP {lap.id}</span>
                                 </div>
                                 <div className="text-white font-bold">{lap.time}</div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-[#adb5bd]">{lap.dist} m</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24">
-                                        <div className="h-full bg-white/40" style={{ width: `${(lap.dist / 300) * 100}%` }}></div>
+                                <div className="flex flex-col gap-1 text-[10px] text-[#adb5bd]">
+                                    <span>{lap.dist.toFixed(1)} km</span>
+                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                        <div className="h-full bg-white/40" style={{ width: `${Math.min(100, (lap.dist / 5) * 100)}%` }}></div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-[#5bc0de]">{lap.speed} Km/h</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24">
-                                        <div className="h-full bg-[#5bc0de]" style={{ width: `${(lap.speed / 80) * 100}%` }}></div>
+                                <div className="flex flex-col gap-1 text-[10px] text-[#5bc0de]">
+                                    <span>{lap.speed.toFixed(1)} Km/h</span>
+                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                        <div className="h-full bg-[#5bc0de]" style={{ width: `${Math.min(100, (lap.speed / 150) * 100)}%` }}></div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-orange-400">{lap.rpm}%</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24">
-                                        <div className="h-full bg-orange-400" style={{ width: `${lap.rpm}%` }}></div>
+                                <div className="flex flex-col gap-1 text-[10px] text-orange-400">
+                                    <span>{lap.rpm} RPM</span>
+                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                        <div className="h-full bg-orange-400" style={{ width: `${Math.min(100, (lap.rpm / 12000) * 100)}%` }}></div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-red-400">{lap.water}%</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24">
-                                        <div className="h-full bg-red-400" style={{ width: `${lap.water}%` }}></div>
+                                <div className="flex flex-col gap-1 text-[10px] text-red-500">
+                                    <span>{lap.water}°C</span>
+                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                        <div className="h-full bg-red-500" style={{ width: `${Math.min(100, (lap.water / 110) * 100)}%` }}></div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-yellow-400">{lap.egt}%</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24">
-                                        <div className="h-full bg-yellow-400" style={{ width: `${lap.egt}%` }}></div>
+                                <div className="flex flex-col gap-1 text-[10px] text-yellow-400">
+                                    <span>{lap.egt || 0}°C</span>
+                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                        <div className="h-full bg-yellow-400" style={{ width: `${Math.min(100, (lap.egt / 900) * 100)}%` }}></div>
                                     </div>
                                 </div>
                                 <div className={`text-xs font-bold ${lap.gap === '0 ms' ? 'text-[#adb5bd]' : 'text-green-400'}`}>{lap.gap}</div>
@@ -164,7 +203,7 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     color="#5bc0de"
                     unit="Km/h"
                     height={220}
-                    showHeader={true}
+                    currentIndex={currentPointIndex}
                 />
 
                 <AnalysisChart
@@ -173,25 +212,17 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     dataKey="rpm"
                     color="#f0ad4e"
                     height={180}
-                />
-
-                <AnalysisChart
-                    title="Delta (ms)"
-                    data={chartData}
-                    dataKey="delta"
-                    color="#10b981"
-                    unit="ms"
-                    height={180}
-                    isArea={true}
+                    currentIndex={currentPointIndex}
                 />
             </div>
         </div>
     );
 }
 
-function ControlButton({ icon, title }: { icon: React.ReactNode; title: string }) {
+function ControlButton({ icon, title, onClick }: { icon: React.ReactNode; title: string, onClick?: () => void }) {
     return (
         <button
+            onClick={onClick}
             className="p-2 hover:bg-white/10 rounded-md text-[#adb5bd] hover:text-white transition-all active:bg-white/5"
             title={title}
         >
@@ -200,27 +231,17 @@ function ControlButton({ icon, title }: { icon: React.ReactNode; title: string }
     );
 }
 
-function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', isArea = false, showHeader = false }: any) {
+function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', currentIndex }: any) {
     return (
         <div className="bg-[#212529]/50 rounded-xl border border-white/5 p-4 shadow-lg backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold text-[#adb5bd] uppercase tracking-widest">{title}</span>
-                {showHeader && (
-                    <div className="flex gap-4 text-[10px] font-mono">
-                        <span className="text-[#00aced]">Lap 2: 57.8</span>
-                        <span className="text-[#ff00ff]">Lap 4: 56.6</span>
-                        <span className="text-[#00ffa2]">Lap 5: 58.8</span>
-                    </div>
-                )}
             </div>
             <div style={{ height }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                        <XAxis
-                            dataKey="time"
-                            hide
-                        />
+                        <XAxis dataKey="index" hide />
                         <YAxis
                             domain={['auto', 'auto']}
                             stroke="rgba(255,255,255,0.2)"
@@ -233,6 +254,7 @@ function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', i
                             contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '10px' }}
                             itemStyle={{ color: color }}
                             labelStyle={{ color: '#adb5bd' }}
+                            labelFormatter={() => ''}
                         />
                         <Line
                             type="monotone"
@@ -241,13 +263,27 @@ function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', i
                             strokeWidth={2}
                             dot={false}
                             activeDot={{ r: 4, strokeWidth: 0 }}
+                            isAnimationActive={false}
                         />
-                        <ReferenceLine x={40} stroke="#ff4d4d" strokeWidth={1} label={{ value: 'Posisi', fill: '#ff4d4d', fontSize: 10, position: 'top' }} />
+                        <ReferenceLine x={currentIndex} stroke="#ff4d4d" strokeWidth={1} label={{ value: 'Posisi', fill: '#ff4d4d', fontSize: 10, position: 'top' }} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
         </div>
     );
+}
+
+function formatLapTime(seconds: number) {
+    if (!seconds) return '00:00.000';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    const ms = Math.round((seconds % 1) * 1000);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+}
+
+function getColorForLap(index: number) {
+    const colors = ['#00aced', '#ff00ff', '#00ffa2', '#f0ad4e', '#ff4d4d', '#7952b3'];
+    return colors[index % colors.length];
 }
 
 function Trophy(props: any) {
