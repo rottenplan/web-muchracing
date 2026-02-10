@@ -40,7 +40,7 @@ export default function TopBar() {
                 >
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-black/5">
                         <Image
-                            src="/Users/muchdas/.gemini/antigravity/brain/e8f2207e-36a8-4c66-8964-bf0daf0459c2/helmet_avatar_1770640323117.png"
+                            src="/images/helmet_avatar.png"
                             alt="Muchdas"
                             width={40}
                             height={40}
@@ -60,7 +60,7 @@ export default function TopBar() {
                         <div className="px-4 py-3 border-b border-black/5 mb-2 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full overflow-hidden border border-black/5">
                                 <Image
-                                    src="/Users/muchdas/.gemini/antigravity/brain/e8f2207e-36a8-4c66-8964-bf0daf0459c2/helmet_avatar_1770640323117.png"
+                                    src="/images/helmet_avatar.png"
                                     alt="Muchdas"
                                     width={40}
                                     height={40}
