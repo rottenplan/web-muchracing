@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Edit, Trash2, Upload, ChevronLeft, ChevronRight, MapPin, Download } from 'lucide-react';
+import { Search, Edit, Trash2, Upload, ChevronLeft, ChevronRight, MapPin, Download, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // Types
@@ -126,12 +126,18 @@ export default function DashboardPage() {
                         <td className="p-3 border-r border-white/5 text-white font-medium">{session.driver || 'FALAH'}</td>
                         <td className="p-3 border-r border-white/5">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[#5bc0de] hover:underline cursor-pointer font-medium">{new Date(session.startTime).toLocaleString('id-ID')}</span>
+                            <Link href={`/analysis/${session._id}`} className="text-[#5bc0de] hover:underline font-medium">
+                              {new Date(session.startTime).toLocaleString('id-ID')}
+                            </Link>
                             <MapPin size={12} className="text-[#5bc0de]" />
                             <Link href={`/sessions/${session._id}`} className="text-[#5bc0de] hover:underline">(peta)</Link>
                           </div>
                         </td>
-                        <td className="p-3 border-r border-white/5 text-[#5bc0de] hover:underline cursor-pointer">{session.name || 'unknown'}</td>
+                        <td className="p-3 border-r border-white/5">
+                          <Link href={`/analysis/${session._id}`} className="text-[#5bc0de] hover:underline font-medium">
+                            {session.name || 'Sesi Tanpa Nama'}
+                          </Link>
+                        </td>
                         <td className="p-3 border-r border-white/5 text-[#adb5bd]">{session.city || '-'}</td>
                         <td className="p-3 border-r border-white/5 text-[#adb5bd] italic">{session.category || 'Vespa Tune Up'}</td>
                         <td className="p-3 border-r border-white/5 text-center text-white">{session.stats?.lapCount || 0}</td>
@@ -140,6 +146,10 @@ export default function DashboardPage() {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex justify-center gap-2">
+                            <Link href={`/analysis/${session._id}`} className="text-[#5bc0de] hover:text-white p-1 hover:bg-[#5bc0de]/10 border border-[#5bc0de]/20 rounded transition-all flex items-center gap-1" title="Analisis">
+                              <Activity size={12} />
+                              <span className="text-[10px] font-black uppercase">Analisis</span>
+                            </Link>
                             <button className="text-[#adb5bd] hover:text-white p-1 hover:bg-white/10 rounded transition-all"><Edit size={14} /></button>
                             <button className="text-[#ff4d4d]/70 hover:text-[#ff4d4d] p-1 hover:bg-white/10 rounded transition-all"><Trash2 size={14} /></button>
                           </div>
