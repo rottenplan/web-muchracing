@@ -2,12 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, AreaChart, Info, Smartphone, Globe, BarChart3, Wrench, Menu } from 'lucide-react';
+import { Home, AreaChart, Info, Smartphone, Globe, BarChart3, Wrench, Menu, ChevronDown } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
+import { useState, useEffect } from 'react';
 
 export default function Sidebar() {
     const pathname = usePathname();
     const { isCollapsed, toggleSidebar } = useSidebar();
+    const [isToolsOpen, setIsToolsOpen] = useState(false);
+
+    // Auto-open tools if a sub-route is active
+    useEffect(() => {
+        if (pathname.startsWith('/settings') || pathname.startsWith('/tools')) {
+            setIsToolsOpen(true);
+        }
+    }, [pathname]);
 
     return (
         <div className={`transition-all duration-300 ${isCollapsed ? 'w-[60px]' : 'w-[240px]'} bg-[#212529] flex flex-col h-screen fixed left-0 top-0 border-r border-black/10 z-[100] overflow-hidden`}>
@@ -22,14 +31,42 @@ export default function Sidebar() {
                 </button>
             </div>
 
-            <div className={`flex-1 py-4 flex flex-col ${isCollapsed ? 'items-center' : 'items-stretch'} gap-1 group`}>
+            <div className={`flex-1 py-4 flex flex-col ${isCollapsed ? 'items-center' : 'items-stretch'} gap-1 group overflow-y-auto`}>
                 <IconNavItem href="/" icon={<Home size={22} />} label="Homepage" active={pathname === '/'} collapsed={isCollapsed} />
                 <IconNavItem href="/dashboard" icon={<AreaChart size={22} />} label="Dashboard" active={pathname === '/dashboard'} collapsed={isCollapsed} />
                 <IconNavItem href="/account" icon={<Info size={22} />} label="My account" active={pathname === '/account'} collapsed={isCollapsed} />
                 <IconNavItem href="/devices" icon={<Smartphone size={22} />} label="My Device" active={pathname === '/devices'} collapsed={isCollapsed} />
                 <IconNavItem href="/tracks" icon={<Globe size={22} />} label="Tracks" active={pathname.startsWith('/tracks')} collapsed={isCollapsed} />
                 <IconNavItem href="/sessions" icon={<BarChart3 size={22} />} label="My Session" active={pathname.startsWith('/sessions')} collapsed={isCollapsed} />
-                <IconNavItem href="/settings/categories" icon={<Wrench size={22} />} label="Tools & settings" active={pathname.startsWith('/settings')} collapsed={isCollapsed} />
+
+                {/* Tools & Settings Expandable */}
+                <div className="flex flex-col">
+                    <button
+                        onClick={() => !isCollapsed && setIsToolsOpen(!isToolsOpen)}
+                        className={`
+                            h-[50px] flex items-center ${isCollapsed ? 'w-[60px] justify-center' : 'px-4 gap-3'} transition-colors
+                            ${pathname.startsWith('/settings') || pathname.startsWith('/tools')
+                                ? 'bg-[#2c3034] text-white'
+                                : 'text-[#adb5bd] hover:bg-white/5 hover:text-white'
+                            }
+                        `}
+                    >
+                        <div className="flex-shrink-0"><Wrench size={22} /></div>
+                        {!isCollapsed && (
+                            <>
+                                <span className="text-sm font-medium whitespace-nowrap flex-1 text-left">Tools & settings</span>
+                                <ChevronDown size={14} className={`transition-transform duration-200 ${isToolsOpen ? 'rotate-180' : ''}`} />
+                            </>
+                        )}
+                    </button>
+
+                    {!isCollapsed && isToolsOpen && (
+                        <div className="bg-[#1a1e21] py-1">
+                            <SubNavItem href="/settings/categories" label="Manage categories" active={pathname === '/settings/categories'} />
+                            <SubNavItem href="/tools/gpx-to-geojson" label="GPX To GeoJson" active={pathname === '/tools/gpx-to-geojson'} />
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -49,6 +86,20 @@ function IconNavItem({ href, icon, label, active, collapsed }: { href: string; i
         >
             <div className="flex-shrink-0">{icon}</div>
             {!collapsed && <span className="text-sm font-medium whitespace-nowrap">{label}</span>}
+        </Link>
+    );
+}
+
+function SubNavItem({ href, label, active }: { href: string; label: string; active: boolean }) {
+    return (
+        <Link
+            href={href}
+            className={`
+                h-10 flex items-center px-12 text-sm transition-colors
+                ${active ? 'text-[#00aced]' : 'text-[#adb5bd] hover:text-white hover:bg-white/5'}
+            `}
+        >
+            <span className="whitespace-nowrap">{label}</span>
         </Link>
     );
 }
