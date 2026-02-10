@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Eye, EyeOff } from 'lucide-react';
+import { Check, Eye, MapPin, Trophy, History } from 'lucide-react';
 
 interface LapsSidebarProps {
     session: any;
@@ -10,11 +10,11 @@ interface LapsSidebarProps {
 
 export default function LapsSidebar({ session, selectedLaps, toggleLap }: LapsSidebarProps) {
     // Generate dummy laps if none (for visualization)
-    const laps = session?.laps?.length ? session.laps : Array.from({ length: 10 }).map((_, i) => ({
+    const laps = session?.laps?.length ? session.laps : Array.from({ length: 12 }).map((_, i) => ({
         index: i + 1,
         time: 60000 + Math.random() * 5000,
-        valid: Math.random() > 0.2, // Randomly invalid
-        sectors: [20000 + Math.random() * 1000, 20000 + Math.random() * 1000, 20000 + Math.random() * 1000]
+        valid: Math.random() > 0.1,
+        sectors: [20000 + Math.random() * 500, 20000 + Math.random() * 500, 20000 + Math.random() * 500]
     }));
 
     const formatTime = (ms: number) => {
@@ -32,86 +32,98 @@ export default function LapsSidebar({ session, selectedLaps, toggleLap }: LapsSi
     const bestLapTime = Math.min(...laps.map((l: any) => l.time));
 
     return (
-        <aside className="w-[350px] bg-[#212529] border-r border-black/20 flex flex-col shrink-0 flex-1">
-            <div className="h-40 bg-[#17a2b8] p-4 flex flex-col justify-between text-white relative overflow-hidden">
+        <aside className="w-[320px] bg-[#212529] border-r border-white/5 flex flex-col shrink-0 h-full shadow-2xl z-[80]">
+            {/* Header: Sirkuit Info */}
+            <div className="h-44 bg-[#5bc0de] p-5 flex flex-col justify-between text-white relative overflow-hidden shadow-lg shrink-0">
                 <div className="relative z-10">
-                    <h2 className="text-xl font-bold leading-tight">Sentul Internasional<br />Karting Sirkuit</h2>
-                    <p className="text-xs opacity-80 mt-1">16111 BOGOR - Indonesia</p>
+                    <h2 className="text-xl font-black leading-tight uppercase tracking-tighter italic drop-shadow-md">
+                        Sentul Internasional<br />Karting Sirkuit
+                    </h2>
+                    <p className="text-[10px] font-bold opacity-80 mt-1 uppercase tracking-widest flex items-center gap-1">
+                        <MapPin size={10} /> 16111 BOGOR - Indonesia
+                    </p>
                 </div>
-                <div className="text-4xl font-racing font-bold self-end relative z-10">
+                <div className="text-5xl font-black self-end relative z-10 italic tracking-tighter opacity-90 drop-shadow-xl">
                     1181m
                 </div>
                 {/* Decorative Track Path */}
-                <svg className="absolute right-[-20px] top-[-20px] w-48 h-48 opacity-20 rotate-12" viewBox="0 0 100 100">
+                <svg className="absolute right-[-20px] top-[-20px] w-52 h-52 opacity-10 rotate-12 pointer-events-none" viewBox="0 0 100 100">
                     <path d="M20,80 C20,20 80,20 80,80" fill="none" stroke="white" strokeWidth="15" />
                 </svg>
             </div>
 
-            <div className="bg-[#1a1a1a] p-2 flex items-center justify-between border-b border-black/20">
-                <span className="text-sm font-bold text-white px-2">Laps</span>
-                <div className="flex gap-1">
-                    {/* Tool icons placeholder */}
-                </div>
+            {/* Title Bar */}
+            <div className="bg-[#1a1a1a] px-4 py-2 flex items-center justify-between border-b border-white/5 shrink-0">
+                <span className="text-[10px] font-black text-[#5bc0de] uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Trophy size={12} /> Daftar Lap
+                </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-[#212529]">
-                {/* Laps Dropdown Header (Fake) */}
-                <div className="bg-[#17a2b8] p-2 rounded text-xs font-bold text-white flex justify-between items-center mb-2">
-                    <span>{new Date().toLocaleString('id-ID')} (FARS)</span>
+            {/* Laps List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-[#1a1a1a]">
+                {/* Session Details Header */}
+                <div className="bg-[#2c3034] p-2.5 rounded-md border border-white/5 text-[9px] font-black text-white/50 flex justify-between items-center mb-4 shadow-sm uppercase tracking-widest">
+                    <span className="flex items-center gap-2 text-white">
+                        <History size={12} className="text-[#5bc0de]" />
+                        {new Date().toLocaleDateString('id-ID')}
+                    </span>
+                    <span className="text-[#5bc0de]">Fars Racing</span>
                 </div>
 
                 {laps.map((lap: any) => {
                     const isSelected = selectedLaps.includes(lap.index);
                     const isBest = lap.time === bestLapTime;
                     const diff = getDiff(lap.time, bestLapTime);
+                    const lapColor = getColorForLap(lap.index);
 
                     return (
                         <div
                             key={lap.index}
                             className={`
-                                group flex items-center gap-2 p-1.5 rounded text-sm transition-colors cursor-pointer select-none
-                                ${!lap.valid ? 'opacity-50 grayscale' : ''}
-                                hover:bg-white/5
+                                group flex items-center gap-3 p-2 rounded-md transition-all cursor-pointer select-none border border-transparent
+                                ${!lap.valid ? 'opacity-30 grayscale italic' : ''}
+                                ${isSelected ? 'bg-[#2c3034] border-white/5 shadow-md scale-[1.02]' : 'hover:bg-white/[0.03]'}
                             `}
                             onClick={() => toggleLap(lap.index)}
                         >
+                            {/* Lap Checkbox/Color Indicator */}
                             <div
-                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors
+                                className={`w-4 h-4 rounded flex items-center justify-center transition-all border
                                 ${isSelected
-                                        ? `bg-[${getColorForLap(lap.index)}] border-transparent text-black`
-                                        : 'border-white/20 bg-transparent'}
+                                        ? `border-transparent shadow-lg text-black`
+                                        : 'border-white/10 bg-black/20'}
                                 `}
-                                style={{ backgroundColor: isSelected ? getColorForLap(lap.index) : 'transparent' }}
+                                style={{ backgroundColor: isSelected ? lapColor : 'transparent' }}
                             >
-                                {isSelected && <Check size={10} />}
+                                {isSelected && <Check size={10} strokeWidth={4} />}
                             </div>
 
-                            <div className="w-6 font-mono text-white/50 text-xs text-center">{lap.index.toString().padStart(2, '0')}</div>
+                            <div className="w-5 font-mono text-[10px] text-white/40 font-black text-center">{lap.index.toString().padStart(2, '0')}</div>
 
-                            <div className="flex-1 font-mono font-bold text-white">
-                                {formatTime(lap.time)}
-                                {diff && <span className={`ml-2 text-xs font-normal ${lap.valid ? 'text-red-400' : 'text-gray-500'}`}>({diff})</span>}
+                            <div className="flex-1 font-mono font-black text-[13px] text-white flex items-center justify-between">
+                                <span className={isBest ? 'text-[#5bc0de]' : ''}>{formatTime(lap.time)}</span>
+                                {diff && !isBest && <span className="text-[9px] font-bold text-red-500/80 tracking-tighter">({diff})</span>}
+                                {isBest && <span className="text-[9px] font-black text-[#5bc0de] uppercase italic tracking-tighter">Terbaik</span>}
                             </div>
 
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
-                                <Eye size={12} />
-                            </div>
+                            <div className={`w-1 h-3 rounded-full transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundColor: lapColor }}></div>
                         </div>
                     );
                 })}
             </div>
 
-            <div className="p-2 border-t border-black/20 text-center">
-                <button className="w-full bg-[#17a2b8] hover:bg-[#138496] text-white py-2 rounded text-sm font-bold uppercase transition-colors">
-                    Load Another session
+            {/* Footer Action */}
+            <div className="p-4 border-t border-white/5 bg-[#1a1a1a] shadow-[0_-10px_20px_rgba(0,0,0,0.2)]">
+                <button className="w-full bg-[#5bc0de] hover:bg-[#46a3bf] text-white py-3 rounded-lg text-xs font-black uppercase tracking-[0.1em] transition-all active:scale-95 shadow-lg shadow-[#5bc0de]/10">
+                    Muat Sesi Lain
                 </button>
             </div>
         </aside>
     );
 }
 
-// Helper for lap colors (FoxLap style neon colors)
+// Helper for lap colors
 function getColorForLap(index: number) {
-    const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
+    const colors = ['#00aced', '#ff00ff', '#00ffa2', '#f0ad4e', '#ff4d4d', '#7952b3'];
     return colors[index % colors.length];
 }
