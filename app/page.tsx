@@ -26,7 +26,7 @@ function HomeContent() {
             {/* Welcome/Header Section */}
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl font-bold text-[#343a40]">Dashboard Utama</h1>
-              <p className="text-sm text-[#6c757d]">Selamat datang kembali di FoxLAP Pro Racing System.</p>
+              <p className="text-sm text-[#6c757d]">Selamat datang kembali di Much Racing Pro Racing System.</p>
             </div>
 
             {/* PRO HUB - Fast Access Logic */}

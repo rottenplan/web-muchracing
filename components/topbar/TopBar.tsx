@@ -29,7 +29,7 @@ export default function TopBar() {
                         <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#ff4d4d" />
                     </svg>
                 </div>
-                <span className="font-extrabold text-[#343a40] text-lg">FoxLAP</span>
+                <span className="font-extrabold text-[#343a40] text-lg">Much Racing</span>
             </div>
 
             {/* Profile Section */}
