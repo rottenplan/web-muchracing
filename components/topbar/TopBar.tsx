@@ -21,15 +21,15 @@ export default function TopBar() {
     }, []);
 
     return (
-        <div className="h-14 bg-white border-b border-black/10 flex items-center justify-between px-6 sticky top-0 z-50">
-            {/* Logo Section */}
+        <header className="h-14 bg-[#212529] border-b border-white/5 px-6 flex items-center justify-between sticky top-0 z-[90]">
+            {/* Branding */}
             <div className="flex items-center gap-2">
-                <div className="w-8 h-8 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#ff4d4d" />
+                <div className="w-8 h-8 bg-[#ff4d4d] rounded-md flex items-center justify-center p-1.5 shadow-lg shadow-black/20">
+                    <svg viewBox="0 0 24 24" className="w-full h-full text-white fill-current">
+                        <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#ffffff" />
                     </svg>
                 </div>
-                <span className="font-extrabold text-[#343a40] text-lg">Much Racing</span>
+                <span className="font-extrabold text-white text-lg tracking-wider">Much Racing</span>
             </div>
 
             {/* Profile Section */}
@@ -92,7 +92,7 @@ export default function TopBar() {
                     </div>
                 )}
             </div>
-        </div>
+        </header>
     );
 }
 

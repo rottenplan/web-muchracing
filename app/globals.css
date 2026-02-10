@@ -2,44 +2,38 @@
 @import "tailwindcss";
 
 :root {
-  /* Modern Dark Blue Theme */
-  --background: #09090b;
-  /* Zinc 950 - Very dark, almost black */
-  --background-secondary: #0f1115;
-  /* Dark blue-ish gray */
-  --foreground: #fafafa;
-  /* Zinc 50 */
+  /* Refined Premium Dark Theme */
+  --background: #1a1a1a;
+  /* Deep Charcoal Background */
+  --background-secondary: #212529;
+  /* Darker Charcoal for Sidebar/TopBar */
+  --foreground: #ffffff;
+  /* Pure White for maximum readability */
 
-  /* Primary Blue Accent */
+  /* Primary Blue Accent (Much Racing / FoxLAP Blue) */
   --primary: #3b82f6;
-  /* Blue 500 - Vibrant */
   --primary-hover: #2563eb;
-  /* Blue 600 */
   --primary-glow: rgba(59, 130, 246, 0.3);
 
-  /* Success & Highlights */
+  /* Success & Highlights (Matching Dashboard Colors) */
   --highlight: #10b981;
-  /* Emerald 500 */
   --highlight-glow: rgba(16, 185, 129, 0.3);
+  --header-blue: #5bc0de;
+  --header-orange: #f0ad4e;
 
   /* Warning */
   --warning: #f59e0b;
-  /* Amber 500 */
 
   /* Card & Surface Colors */
-  --card-bg: #18181b;
-  /* Zinc 900 */
-  --card-bg-hover: #27272a;
-  /* Zinc 800 */
-  --text-secondary: #a1a1aa;
-  /* Zinc 400 */
-  --border-color: #27272a;
-  /* Zinc 800 */
+  --card-bg: #212529;
+  --card-bg-hover: #2c3034;
+  --text-secondary: #adb5bd;
+  --border-color: rgba(255, 255, 255, 0.05);
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.7);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
   --shadow-glow-blue: 0 0 20px var(--primary-glow);
 }
 

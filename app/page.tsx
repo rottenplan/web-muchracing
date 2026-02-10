@@ -10,10 +10,9 @@ import { useState, useEffect } from 'react';
 // Main Content Component that uses Sidebar context
 function HomeContent() {
   const { isCollapsed } = useSidebar();
-  const [viewMode, setViewMode] = useState<'track' | 'drag'>('track');
 
   return (
-    <div className="min-h-screen bg-[#f4f6f9] dark:bg-[#1a1a1a] flex font-sans">
+    <div className="min-h-screen bg-[#1a1a1a] flex font-sans text-white">
       {/* Sidebar */}
       <Sidebar />
 
@@ -25,14 +24,14 @@ function HomeContent() {
           <div className="container mx-auto space-y-8">
             {/* Welcome/Header Section */}
             <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold text-[#343a40]">Dashboard Utama</h1>
-              <p className="text-sm text-[#6c757d]">Selamat datang kembali di Much Racing Pro Racing System.</p>
+              <h1 className="text-2xl font-bold text-white">Dashboard Utama</h1>
+              <p className="text-sm text-[#adb5bd]">Selamat datang kembali di Much Racing Pro Racing System.</p>
             </div>
 
             {/* PRO HUB - Fast Access Logic */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold text-[#343a40] tracking-wider uppercase italic">PRO HUB</h2>
+                <h2 className="text-lg font-bold text-white tracking-wider uppercase italic">PRO HUB</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent"></div>
               </div>
 
@@ -48,15 +47,15 @@ function HomeContent() {
               </div>
             </div>
 
-            {/* Recent Activity or Quick Overview can go here */}
-            <div className="carbon-bg p-8 rounded-2xl border border-black/5 text-center bg-white shadow-sm">
-              <History className="w-12 h-12 mx-auto mb-4 text-[#adb5bd] opacity-20" />
-              <p className="text-sm font-semibold text-[#6c757d] tracking-widest uppercase">Pilih modul di atas untuk memulai</p>
+            {/* Recent Activity or Quick Overview */}
+            <div className="bg-[#212529] p-8 rounded-2xl border border-white/5 text-center shadow-lg">
+              <History className="w-12 h-12 mx-auto mb-4 text-[#adb5bd] opacity-10" />
+              <p className="text-sm font-semibold text-[#adb5bd] tracking-widest uppercase">Pilih modul di atas untuk memulai</p>
             </div>
           </div>
         </main>
 
-        <footer className="p-4 text-xs text-[#6c757d] border-t border-black/5 ml-4">
+        <footer className="p-4 text-xs text-[#6c757d] border-t border-white/5 ml-4">
           Nearby Application SAS - 2026 - Hubungi kami
         </footer>
       </div>
