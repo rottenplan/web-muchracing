@@ -4,10 +4,29 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, AreaChart, Smartphone, Info, Power, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function TopBar() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+
+    const handleDisconnect = async () => {
+        try {
+            // Call logout API
+            await fetch('/api/auth/logout', { method: 'POST' });
+
+            // Clear cookie client-side
+            document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+            // Close dropdown and redirect
+            setIsOpen(false);
+            router.push('/login');
+            router.refresh(); // Ensure server components refresh
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -81,10 +100,7 @@ export default function TopBar() {
 
                         <button
                             className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#ff4d4d] hover:bg-red-50 transition-colors"
-                            onClick={() => {
-                                setIsOpen(false);
-                                // Handle disconnect logic here
-                            }}
+                            onClick={handleDisconnect}
                         >
                             <Power size={18} />
                             <span className="font-medium">Disconnect</span>
