@@ -1,3 +1,5 @@
+'use client';
+
 import Sidebar from '@/components/sidebar/Sidebar';
 import TopBar from '@/components/topbar/TopBar';
 import { SidebarProvider, useSidebar } from '@/components/sidebar/SidebarContext';
