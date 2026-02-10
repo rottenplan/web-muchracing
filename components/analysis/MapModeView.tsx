@@ -96,7 +96,7 @@ export default function MapModeView({ session, selectedLaps }: MapModeViewProps)
                 {/* Layer Picker Dropdown */}
                 {showLayers && (
                     <div className="bg-[#212529] border border-white/10 rounded-lg shadow-2xl overflow-hidden min-w-[150px]">
-                        {Object.keys(layers).map((layer) => (
+                        {Object.keys(layers).map((layer: string) => (
                             <button
                                 key={layer}
                                 onClick={() => {

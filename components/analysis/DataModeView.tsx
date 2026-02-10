@@ -150,7 +150,7 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     </div>
 
                     <div className="divide-y divide-white/5 min-w-[800px]">
-                        {lapDetails.map((lap) => (
+                        {lapDetails.map((lap: any) => (
                             <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.02] transition-colors group ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
                                 <div className="text-sm font-sans font-bold flex items-center gap-2">
                                     <div className="w-1 h-4 rounded-full" style={{ backgroundColor: lap.color }}></div>
