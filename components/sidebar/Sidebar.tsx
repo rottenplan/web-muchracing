@@ -10,7 +10,7 @@ export default function Sidebar() {
     const { isCollapsed, toggleSidebar } = useSidebar();
 
     return (
-        <div className={`transition-all duration-300 ${isCollapsed ? 'w-[60px]' : 'w-[240px]'} bg-[#212529] flex flex-col h-screen fixed left-0 top-0 border-r border-black/10 z-50 overflow-hidden`}>
+        <div className={`transition-all duration-300 ${isCollapsed ? 'w-[60px]' : 'w-[240px]'} bg-[#212529] flex flex-col h-screen fixed left-0 top-0 border-r border-black/10 z-[100] overflow-hidden`}>
             {/* Header/Brand */}
             <div className={`h-14 flex items-center ${isCollapsed ? 'justify-center' : 'px-4 justify-between'} bg-[#1a1e21] border-b border-white/5`}>
                 {!isCollapsed && <span className="font-bold text-white text-lg tracking-wider">Navigation</span>}
