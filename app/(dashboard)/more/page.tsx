@@ -12,7 +12,7 @@ import {
     Zap
 } from "lucide-react";
 import Link from "next/link";
-import BottomNav from '@/components/BottomNav';
+
 
 export default function MorePage() {
     return (
@@ -85,7 +85,7 @@ export default function MorePage() {
 
             </div>
 
-            <BottomNav />
+
         </main>
     );
 }

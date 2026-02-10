@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { History, TrendingUp, Trophy, ChevronRight, Activity, Zap, Calendar, MapPin, Timer } from "lucide-react";
 import Link from "next/link";
-import BottomNav from '@/components/BottomNav';
+
 
 export default function Home() {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -131,7 +131,7 @@ export default function Home() {
         )}
       </div>
 
-      <BottomNav />
+
     </main>
   );
 }
