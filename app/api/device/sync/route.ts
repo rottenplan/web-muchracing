@@ -234,6 +234,30 @@ export async function POST(request: Request) {
             });
         }
 
+        // Handle Telemetry Push
+        if (body.type === 'telemetry') {
+            const { lat, lon, speed, rpm, sats, bat_v, bat_p } = body.data;
+
+            user.liveStatus = {
+                lat,
+                lng: lon, // Map lon to lng
+                speed,
+                rpm,
+                sats,
+                bat_v,
+                bat_p,
+                is_live: true,
+                lastUpdate: new Date()
+            };
+
+            await user.save();
+
+            return NextResponse.json({
+                success: true,
+                message: 'Telemetry updated'
+            });
+        }
+
         // Handle Settings Update (e.g. sync back from device)
         if (body.settings) {
             console.log('Updating settings for user:', user.email);
