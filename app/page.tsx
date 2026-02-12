@@ -36,7 +36,7 @@ function HomeContent() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ModuleTile icon={<Trophy className="w-6 h-6" />} label="LAP TIMER" href="/tracks" color="highlight" />
+                <ModuleTile icon={<Trophy className="w-6 h-6" />} label="LAP TIMER" href="/laptimer" color="highlight" />
                 <ModuleTile icon={<Zap className="w-6 h-6" />} label="DRAG METER" href="/dashboard" color="primary" />
                 <ModuleTile icon={<Activity className="w-6 h-6" />} label="RPM SENSOR" href="/rpm" color="highlight" />
                 <ModuleTile icon={<Gauge className="w-6 h-6" />} label="CHART" href="/analysis" color="primary" />

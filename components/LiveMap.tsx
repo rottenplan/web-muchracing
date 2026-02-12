@@ -5,16 +5,19 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect } from 'react';
 
-// Fix for default marker icon in Next.js
-const icon = L.icon({
-    iconUrl: '/images/marker-icon.png',
-    shadowUrl: '/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    tooltipAnchor: [16, -28],
-    shadowSize: [41, 41]
-});
+// Fix for Leaflet icons in Next.js
+const FixLeafletIcon = () => {
+    useEffect(() => {
+        // @ts-ignore
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        });
+    }, []);
+    return null;
+};
 
 // Component to center map on new coordinates
 function MapUpdater({ center }: { center: [number, number] }) {
@@ -43,6 +46,7 @@ export default function LiveMap({ lat, lng, speed, rpm }: LiveMapProps) {
                 style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={true}
             >
+                <FixLeafletIcon />
                 <TileLayer
                     attribution='&copy; Google Maps'
                     url="http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}"
