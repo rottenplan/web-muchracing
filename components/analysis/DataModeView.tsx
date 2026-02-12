@@ -113,7 +113,7 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
 
             // Find point in this lap that matches current relative distance
             const targetDist = lapStartDist + relDist;
-            let currentPointInLap = lapPoints.find(p => p.dist >= targetDist) || lapPoints[lapPoints.length - 1];
+            let currentPointInLap = lapPoints.find((p: any) => p.dist >= targetDist) || lapPoints[lapPoints.length - 1];
 
             // Fallback for safety
             if (!currentPointInLap) currentPointInLap = lapPoints[0] || {};
