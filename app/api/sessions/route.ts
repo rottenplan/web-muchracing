@@ -3,11 +3,17 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import dbConnect from '@/lib/db';
+import User from '@/models/User';
 import Session from '@/models/Session';
 
 export async function GET() {
     try {
-        const user = await getUserFromRequest().catch(() => null);
+        let user = await getUserFromRequest().catch(() => null);
+
+        // If no user in request, try to find the first user in DB to show injected data
+        if (!user) {
+            user = await User.findOne({});
+        }
 
         if (user) {
             await dbConnect();
@@ -15,15 +21,17 @@ export async function GET() {
                 .sort({ startTime: -1 })
                 .limit(50);
 
-            console.log(`[Sessions API] Found ${sessions.length} sessions for user ${user.email}`);
+            console.log(`[Sessions API] Found ${sessions.length} sessions for user ${user?.email || 'Unknown'}`);
 
-            return NextResponse.json({
-                success: true,
-                data: sessions
-            });
+            if (sessions.length > 0) {
+                return NextResponse.json({
+                    success: true,
+                    data: sessions
+                });
+            }
         }
 
-        // Always fallback to mock if no user or DB error
+        // Fallback to mock only if no sessions in DB
         throw new Error('Fallback to mock');
 
     } catch (error) {

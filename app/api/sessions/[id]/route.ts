@@ -11,15 +11,14 @@ export async function GET(
         const { id } = await params;
         const user = await getUserFromRequest().catch(() => null);
 
-        // Find session in DB if not the mock ID and user exists
+        // Find session in DB if not the mock ID
         let session = null;
-        if (id !== 'mock_session_id' && user) {
+        if (id !== 'mock_session_id') {
             try {
                 await dbConnect();
-                session = await Session.findOne({
-                    _id: id,
-                    userId: user._id
-                });
+                // If we have a user, ensure it belongs to them. Otherwise, just find it (for demo/injection)
+                const query = user ? { _id: id, userId: user._id } : { _id: id };
+                session = await Session.findOne(query);
             } catch (e) {
                 console.error('DB Find error, falling back to mock');
             }
