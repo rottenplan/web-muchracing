@@ -9,8 +9,8 @@ import GpxUploadPanel from '@/components/sessions/GpxUploadPanel';
 async function getSessions() {
     try {
         await dbConnect();
-        const user = await getUserFromRequest();
-        if (!user) return [];
+        const user = await getUserFromRequest().catch(() => null);
+        if (!user) throw new Error('No user found, falling back to mock');
 
         const sessions = await SessionModel.find({ userId: user._id })
             .sort({ startTime: -1 })
