@@ -19,18 +19,44 @@ const Polyline = dynamic(() => import('react-leaflet').then(mod => mod.Polyline)
 const CircleMarker = dynamic(() => import('react-leaflet').then(mod => mod.CircleMarker), { ssr: false });
 const Tooltip = dynamic(() => import('react-leaflet').then(mod => mod.Tooltip), { ssr: false });
 
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix Leaflet marker icons
+const iconRetinaUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png';
+const iconUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png';
+const shadowUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png';
+
+if (typeof window !== 'undefined') {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl,
+        iconUrl,
+        shadowUrl,
+    });
+}
+
 interface MapModeViewProps {
     session: any;
     selectedLaps: number[];
+    isPlaying: boolean;
+    setIsPlaying: (playing: boolean) => void;
+    currentPointIndex: number;
+    setCurrentPointIndex: (index: number) => void;
 }
 
-export default function MapModeView({ session, selectedLaps }: MapModeViewProps) {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentPointIndex, setCurrentPointIndex] = useState(0);
+export default function MapModeView({
+    session,
+    selectedLaps,
+    isPlaying,
+    setIsPlaying,
+    currentPointIndex,
+    setCurrentPointIndex
+}: MapModeViewProps) {
     const [showLayers, setShowLayers] = useState(false);
     const [selectedLayer, setSelectedLayer] = useState('Google Satellite');
 
-    const points = session?.points || [];
+    const points = useMemo(() => session?.points || [], [session?.points]);
     const laps = session?.laps || [];
 
     // Map Layers
@@ -39,23 +65,6 @@ export default function MapModeView({ session, selectedLaps }: MapModeViewProps)
         'OpenStreetMap': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         'Dark Matter': 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     };
-
-    // Playback Logic
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isPlaying && currentPointIndex < points.length - 1) {
-            interval = setInterval(() => {
-                setCurrentPointIndex(prev => {
-                    if (prev >= points.length - 1) {
-                        setIsPlaying(false);
-                        return prev;
-                    }
-                    return prev + 1;
-                });
-            }, 100);
-        }
-        return () => clearInterval(interval);
-    }, [isPlaying, currentPointIndex, points.length]);
 
     const currentPoint = points[currentPointIndex] || {};
 
@@ -113,31 +122,36 @@ export default function MapModeView({ session, selectedLaps }: MapModeViewProps)
             </div>
 
             {/* Map Layer */}
-            <div className="flex-1 relative z-[1]">
-                <MapContainer center={center as any} zoom={16} style={{ height: '100%', width: '100%', background: '#0a0a0a' }}>
+            <div className="flex-1 relative z-[1]" style={{ minHeight: '400px' }}>
+                <MapContainer
+                    center={center as any}
+                    zoom={17}
+                    style={{ height: '100%', width: '100%', background: '#0a0a0a' }}
+                    scrollWheelZoom={true}
+                >
                     <TileLayer url={(layers as any)[selectedLayer]} />
 
                     {trackPath.length > 0 && (
                         <Polyline
                             positions={trackPath as any}
                             color="#5bc0de"
-                            weight={3}
-                            opacity={0.8}
+                            weight={4}
+                            opacity={0.6}
                         />
                     )}
 
                     {currentPoint.lat && (
                         <CircleMarker
                             center={[currentPoint.lat, currentPoint.lng]}
-                            radius={8}
+                            radius={10}
                             fillColor="#f0ad4e"
                             color="white"
-                            weight={2}
+                            weight={3}
                             fillOpacity={1}
                         >
-                            <Tooltip permanent direction="top" offset={[0, -10]}>
-                                <div className="bg-black/90 p-1 rounded border border-[#f0ad4e] text-[9px] font-black text-white">
-                                    {currentPoint.speed?.toFixed(1) || 0} Km/h
+                            <Tooltip permanent direction="top" offset={[0, -15]}>
+                                <div className="bg-black/90 p-1.5 rounded border border-[#f0ad4e] text-[10px] font-black text-white shadow-2xl backdrop-blur-md">
+                                    {currentPoint.speed?.toFixed(1) || 0} <span className="text-[8px] text-[#adb5bd]">KM/H</span>
                                 </div>
                             </Tooltip>
                         </CircleMarker>
@@ -145,65 +159,90 @@ export default function MapModeView({ session, selectedLaps }: MapModeViewProps)
                 </MapContainer>
             </div>
 
-            {/* Advanced Professional Scrubber */}
-            <div className="h-56 bg-[#212529] border-t border-white/5 flex flex-col relative z-[1001] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-                {/* Visual Telemetry Scrubber Area */}
-                <div className="flex-1 relative overflow-hidden bg-black/20 group cursor-pointer" onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const percent = x / rect.width;
-                    setCurrentPointIndex(Math.floor(percent * points.length));
-                }}>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-full h-px bg-white/5"></div>
+            {/* Professional Scrubber & Playback Bar */}
+            <div className="bg-[#212529] border-t border-white/10 flex flex-col relative z-[1001] shadow-2xl">
+                {/* Visual Scrubber */}
+                <div
+                    className="h-12 relative overflow-hidden bg-black/40 group cursor-pointer hover:bg-black/60 transition-colors"
+                    onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const percent = x / rect.width;
+                        setCurrentPointIndex(Math.floor(percent * points.length));
+                    }}
+                >
+                    {/* Telemetry Waveform (Simplified) */}
+                    <div className="absolute inset-0 pointer-events-none opacity-20">
+                        <svg className="w-full h-full" preserveAspectRatio="none">
+                            <path
+                                d={`M${points.map((p: any, i: number) => `${(i / points.length) * 100},${48 - (p.speed / 2)}`).join(' L ')}`}
+                                fill="none" stroke="#5bc0de" strokeWidth="1"
+                            />
+                        </svg>
                     </div>
 
-                    {/* Telemetry Graph Series */}
-                    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                        <path
-                            d={`M${points.map((p: any, i: number) => `${(i / points.length) * 1000},${150 - (p.speed || 0)}`).join(' L ')}`}
-                            fill="none" stroke="#5bc0de" strokeWidth="2" strokeOpacity="0.4"
-                        />
-                    </svg>
+                    {/* Progress Bar */}
+                    <div
+                        className="absolute top-0 bottom-0 left-0 bg-[#5bc0de]/20 border-r border-[#5bc0de] transition-all duration-100"
+                        style={{ width: `${(currentPointIndex / points.length) * 100}%` }}
+                    />
 
-                    {/* Active Scrubber Line */}
-                    <div className="absolute top-0 bottom-0 w-px bg-white shadow-[0_0_10px_white] z-30 transition-all duration-100" style={{ left: `${(currentPointIndex / points.length) * 100}%` }}>
-                        <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-white rounded-full shadow-lg"></div>
-
-                        {/* Current Value Tooltip */}
-                        <div className="absolute top-4 -left-12 bg-black/90 border border-[#5bc0de] px-2 py-1 rounded text-[10px] font-black text-[#5bc0de] shadow-xl backdrop-blur-sm whitespace-nowrap tabular-nums">
-                            {currentPoint.speed?.toFixed(1) || 0} Km/h
-                        </div>
+                    {/* Scrub Handle */}
+                    <div
+                        className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] z-30 pointer-events-none transition-all duration-100"
+                        style={{ left: `${(currentPointIndex / points.length) * 100}%` }}
+                    >
+                        <div className="absolute -top-1 -left-1 w-3 h-3 bg-white rounded-full shadow-lg border border-black/20"></div>
                     </div>
                 </div>
 
-                {/* Timeline Controls */}
-                <div className="h-14 bg-[#1a1a1a] flex items-center px-6 justify-between border-t border-white/5">
-                    {/* Start Play/Time */}
-                    <div className="flex items-center gap-4">
+                {/* Control Bar */}
+                <div className="h-20 bg-[#1a1a1a] flex items-center px-8 justify-between border-t border-white/5">
+                    <div className="flex items-center gap-8">
+                        {/* Play Button */}
                         <button
                             onClick={() => setIsPlaying(!isPlaying)}
-                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${isPlaying ? 'bg-red-500 text-white' : 'bg-[#5bc0de] text-white hover:scale-105'}`}
+                            className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-all active:scale-95 ${isPlaying ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-[#5bc0de] text-white hover:bg-[#46a3bf] hover:scale-105'}`}
                         >
-                            {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                            {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
                         </button>
+
+                        {/* Large Modern Timer */}
                         <div className="flex flex-col">
-                            <span className="text-white font-black font-mono text-sm leading-none tabular-nums">{currentPoint.time || '00:00.000'}</span>
-                            <span className="text-[8px] text-[#adb5bd] font-bold uppercase tracking-tighter mt-1 tabular-nums">Status: {isPlaying ? 'BERJALAN' : 'BERHENTI'}</span>
+                            <div className="text-3xl font-black font-mono text-white tracking-tighter leading-none tabular-nums italic">
+                                {currentPoint.time || '00:00.000'}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                <span className="text-[10px] text-[#adb5bd] font-black uppercase tracking-widest">{isPlaying ? 'Live Tracking' : 'Paused'}</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Timeline Markers */}
-                    <div className="hidden md:flex gap-12 text-[10px] text-white/30 font-bold uppercase tracking-widest tabular-nums">
-                        <span>Poin: {currentPointIndex} / {points.length}</span>
-                        <span>RPM: {currentPoint.rpm || 0}</span>
-                        <span>ALT: {currentPoint.alt?.toFixed(1) || 0}m</span>
+                    {/* Live Snapshot Data */}
+                    <div className="flex gap-10">
+                        <div className="flex flex-col items-center">
+                            <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">Kecepatan</span>
+                            <span className="text-xl font-black text-[#5bc0de] font-mono tabular-nums italic">{currentPoint.speed?.toFixed(1) || 0}<span className="text-[10px] ml-1 uppercase not-italic text-white/50">Km/h</span></span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">RPM</span>
+                            <span className="text-xl font-black text-orange-400 font-mono tabular-nums italic">{currentPoint.rpm || 0}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">Suhu Air</span>
+                            <span className="text-xl font-black text-red-500 font-mono tabular-nums italic">{currentPoint.water || 0}°<span className="text-[10px] ml-0.5 uppercase not-italic text-white/50">C</span></span>
+                        </div>
                     </div>
 
-                    {/* Total Duration/Info */}
-                    <div className="flex flex-col items-end">
-                        <span className="text-white/60 font-black font-mono text-xs leading-none uppercase tracking-widest">{session.name || 'Sesi Latihan'}</span>
-                        <span className="text-[8px] text-[#adb5bd] font-bold uppercase tracking-tighter mt-1 italic">{session.trackName || 'Sentul Circuit'}</span>
+                    {/* Session Info */}
+                    <div className="hidden lg:flex flex-col items-end">
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1 italic">Sesi: {session.name || 'Latihan Sentul'}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-[#5bc0de] uppercase tracking-widest">{session.trackName || 'Sentul Circuit'}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/10"></div>
+                            <span className="text-[10px] text-[#adb5bd] font-bold uppercase tracking-widest">Lap {currentPoint.lapNumber || 1}</span>
+                        </div>
                     </div>
                 </div>
             </div>

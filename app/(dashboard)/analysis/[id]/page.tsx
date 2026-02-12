@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useMemo } from 'react';
 import { notFound } from 'next/navigation';
 import axios from 'axios';
 
@@ -20,6 +20,11 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
     const [viewMode, setViewMode] = useState<'data' | 'map'>('data');
     const [selectedLaps, setSelectedLaps] = useState<number[]>([]);
 
+    // Playback State (Lifted for cross-view synchronization)
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentPointIndex, setCurrentPointIndex] = useState(0);
+
+    // Fetch Session Data
     useEffect(() => {
         const fetchSession = async () => {
             try {
@@ -34,7 +39,6 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
                         const bestLap = [...sessionData.laps].sort((a, b) => a.lapTime - b.lapTime)[0];
                         setSelectedLaps([bestLap.lapNumber]);
                     } else if (sessionData.points.length > 0) {
-                        // If no defined laps, select "Lap 1" as placeholder
                         setSelectedLaps([1]);
                     }
                 } else {
@@ -50,6 +54,25 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
 
         fetchSession();
     }, [id]);
+
+    // Playback Ticker
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        const points = session?.points || [];
+
+        if (isPlaying && currentPointIndex < points.length - 1) {
+            interval = setInterval(() => {
+                setCurrentPointIndex(prev => {
+                    if (prev >= points.length - 1) {
+                        setIsPlaying(false);
+                        return prev;
+                    }
+                    return prev + 1;
+                });
+            }, 100);
+        }
+        return () => clearInterval(interval);
+    }, [isPlaying, currentPointIndex, session?.points]);
 
     const toggleLap = (lapNumber: number) => {
         if (selectedLaps.includes(lapNumber)) {
@@ -94,19 +117,31 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
             />
 
             <div className="flex-1 flex overflow-hidden">
-                {/* Left Sidebar */}
                 <LapsSidebar
                     session={session}
                     selectedLaps={selectedLaps}
                     toggleLap={toggleLap}
                 />
 
-                {/* Main Content Area */}
                 <main className="flex-1 flex flex-col overflow-hidden">
                     {viewMode === 'data' ? (
-                        <DataModeView session={session} selectedLaps={selectedLaps} />
+                        <DataModeView
+                            session={session}
+                            selectedLaps={selectedLaps}
+                            isPlaying={isPlaying}
+                            setIsPlaying={setIsPlaying}
+                            currentPointIndex={currentPointIndex}
+                            setCurrentPointIndex={setCurrentPointIndex}
+                        />
                     ) : (
-                        <MapModeView session={session} selectedLaps={selectedLaps} />
+                        <MapModeView
+                            session={session}
+                            selectedLaps={selectedLaps}
+                            isPlaying={isPlaying}
+                            setIsPlaying={setIsPlaying}
+                            currentPointIndex={currentPointIndex}
+                            setCurrentPointIndex={setCurrentPointIndex}
+                        />
                     )}
                 </main>
             </div>

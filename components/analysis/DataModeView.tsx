@@ -30,11 +30,20 @@ import {
 interface DataModeViewProps {
     session: any;
     selectedLaps: number[];
+    isPlaying: boolean;
+    setIsPlaying: (playing: boolean) => void;
+    currentPointIndex: number;
+    setCurrentPointIndex: (index: number) => void;
 }
 
-export default function DataModeView({ session, selectedLaps }: DataModeViewProps) {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentPointIndex, setCurrentPointIndex] = useState(0);
+export default function DataModeView({
+    session,
+    selectedLaps,
+    isPlaying,
+    setIsPlaying,
+    currentPointIndex,
+    setCurrentPointIndex
+}: DataModeViewProps) {
 
     // Process session points into chart data
     const points = useMemo(() => {
@@ -51,23 +60,6 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
     }, [session?.points]);
 
     const laps = session?.laps || [];
-
-    // Playback Logic
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isPlaying && currentPointIndex < points.length - 1) {
-            interval = setInterval(() => {
-                setCurrentPointIndex(prev => {
-                    if (prev >= points.length - 1) {
-                        setIsPlaying(false);
-                        return prev;
-                    }
-                    return prev + 1;
-                });
-            }, 100); // 10Hz playback
-        }
-        return () => clearInterval(interval);
-    }, [isPlaying, currentPointIndex, points.length]);
 
     const currentPoint = points[currentPointIndex] || {};
 
