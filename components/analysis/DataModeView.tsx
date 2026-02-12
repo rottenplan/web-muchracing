@@ -37,7 +37,19 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     // Process session points into chart data
-    const points = session?.points || [];
+    const points = useMemo(() => {
+        let cumulativeDist = 0;
+        return (session?.points || []).map((p: any, i: number, arr: any[]) => {
+            if (i > 0) {
+                const dt = (parseFloat(p.time) - parseFloat(arr[i - 1].time)) / 1000;
+                if (dt > 0) {
+                    cumulativeDist += (p.speed * dt) / 3.6;
+                }
+            }
+            return { ...p, dist: cumulativeDist };
+        });
+    }, [session?.points]);
+
     const laps = session?.laps || [];
 
     // Playback Logic
@@ -59,39 +71,70 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
 
     const currentPoint = points[currentPointIndex] || {};
 
+    // Get current lap and its relative distance
+    const currentLapInfo = useMemo(() => {
+        if (!points || points.length === 0) return null;
+        const cp = points[currentPointIndex];
+        const lap = laps.find((l: any, i: number) => {
+            const startIdx = i === 0 ? 0 : laps[i - 1].pointIndex + 1;
+            return currentPointIndex >= startIdx && currentPointIndex <= l.pointIndex;
+        });
+        if (!lap) return null;
+
+        const lapStartIdx = laps.indexOf(lap) === 0 ? 0 : laps[laps.indexOf(lap) - 1].pointIndex + 1;
+        const lapStartDist = points[lapStartIdx]?.dist || 0;
+        const relativeDist = cp.dist - lapStartDist;
+
+        return { lapNumber: lap.lapNumber, relativeDist };
+    }, [currentPointIndex, points, laps]);
+
     // Map Telemetry Data for Charts
     const chartData = useMemo(() => {
-        if (!points || points.length === 0) return [];
-
-        // If laps are selected, we might want to overlay them. 
-        // For simplicity now, let's show the whole session or selected portion.
         return points.map((p: any, i: number) => ({
             index: i,
             time: p.time,
             speed: p.speed || 0,
             rpm: p.rpm || 0,
-            // Add other fields as needed
         }));
     }, [points]);
 
-    // Format Lap Details for Table
+    // Format Lap Details for Table (Dynamic based on current position)
     const lapDetails = useMemo(() => {
-        if (!laps) return [];
+        if (!laps || !points.length) return [];
 
         const bestTime = Math.min(...laps.map((l: any) => l.lapTime));
+        const relDist = currentLapInfo?.relativeDist || 0;
 
-        return laps.map((l: any) => ({
-            id: l.lapNumber,
-            time: formatLapTime(l.lapTime),
-            dist: l.distance || 0,
-            speed: l.maxSpeed || 0,
-            rpm: l.maxRpm || 0,
-            water: l.avgWater || 0, // Assuming these fields exist or we calculate them
-            egt: l.avgEgt || 0,
-            gap: l.lapTime === bestTime ? '0 ms' : `+${Math.round((l.lapTime - bestTime) * 1000)} ms`,
-            color: getColorForLap(l.lapNumber)
-        }));
-    }, [laps]);
+        return laps.map((l: any, i: number) => {
+            // Find equivalent point in this lap based on relative distance
+            const lapStartIdx = i === 0 ? 0 : laps[i - 1].pointIndex + 1;
+            const lapPoints = points.slice(lapStartIdx, l.pointIndex + 1);
+            const lapStartDist = points[lapStartIdx]?.dist || 0;
+
+            // Find point in this lap that matches current relative distance
+            const targetDist = lapStartDist + relDist;
+            let currentPointInLap = lapPoints.find(p => p.dist >= targetDist) || lapPoints[lapPoints.length - 1];
+
+            // Fallback for safety
+            if (!currentPointInLap) currentPointInLap = lapPoints[0] || {};
+
+            return {
+                id: l.lapNumber,
+                time: formatLapTime(l.lapTime),
+                dist: currentPointInLap.dist - lapStartDist,
+                totalLapDist: (points[l.pointIndex]?.dist || 0) - lapStartDist,
+                speed: currentPointInLap.speed || 0,
+                maxSpeed: l.maxSpeed || 150,
+                rpm: currentPointInLap.rpm || 0,
+                maxRpm: l.maxRpm || 14000,
+                water: currentPointInLap.water || l.avgWater || 0,
+                egt: currentPointInLap.egt || l.avgEgt || 0,
+                gap: l.lapTime === bestTime ? '0 ms' : `+${Math.round((l.lapTime - bestTime) * 1000)} ms`,
+                color: getColorForLap(l.lapNumber),
+                isActive: currentLapInfo?.lapNumber === l.lapNumber
+            };
+        });
+    }, [laps, points, currentLapInfo]);
 
     return (
         <div className="flex-1 flex flex-col bg-[#1a1a1a] overflow-hidden text-white font-sans">
@@ -141,9 +184,9 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     <div className="bg-[#2c3034] min-w-[800px] grid grid-cols-8 gap-4 px-4 py-2 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
                         <div className="flex items-center gap-2"><Trophy size={10} /> LAP</div>
                         <div className="flex items-center gap-2"><Gauge size={10} /> Waktu</div>
-                        <div className="flex items-center gap-2"><MapPin size={10} /> Jarak</div>
-                        <div className="flex items-center gap-2"><Zap size={10} /> Speed Max</div>
-                        <div className="flex items-center gap-2"><Activity size={10} /> RPM Max</div>
+                        <div className="flex items-center gap-2"><MapPin size={10} /> Jarak (Lap)</div>
+                        <div className="flex items-center gap-2"><Zap size={10} /> Kecepatan</div>
+                        <div className="flex items-center gap-2"><Activity size={10} /> RPM</div>
                         <div className="flex items-center gap-2"><Thermometer size={10} /> Water</div>
                         <div className="flex items-center gap-2"><Thermometer size={10} /> EGT</div>
                         <div className="flex items-center gap-2"><BarChart3 size={10} /> Gap</div>
@@ -151,40 +194,40 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
 
                     <div className="divide-y divide-white/5 min-w-[800px]">
                         {lapDetails.map((lap: any) => (
-                            <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.02] transition-colors group ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
+                            <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.04] transition-colors group ${lap.isActive ? 'bg-[#5bc0de]/10 border-l-2 border-[#5bc0de]' : ''} ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
                                 <div className="text-sm font-sans font-bold flex items-center gap-2">
                                     <div className="w-1 h-4 rounded-full" style={{ backgroundColor: lap.color }}></div>
                                     <span style={{ color: lap.color }}>LAP {lap.id}</span>
                                 </div>
                                 <div className="text-white font-bold">{lap.time}</div>
                                 <div className="flex flex-col gap-1 text-[10px] text-[#adb5bd]">
-                                    <span>{lap.dist.toFixed(1)} km</span>
+                                    <span>{(lap.dist / 1000).toFixed(3)} km</span>
                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-white/40" style={{ width: `${Math.min(100, (lap.dist / 5) * 100)}%` }}></div>
+                                        <div className="h-full bg-white/40 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.dist / lap.totalLapDist) * 100)}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 text-[10px] text-[#5bc0de]">
-                                    <span>{lap.speed.toFixed(1)} Km/h</span>
+                                    <span className="font-bold">{lap.speed.toFixed(1)} Km/h</span>
                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-[#5bc0de]" style={{ width: `${Math.min(100, (lap.speed / 150) * 100)}%` }}></div>
+                                        <div className="h-full bg-[#5bc0de] transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.speed / 160) * 100)}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 text-[10px] text-orange-400">
-                                    <span>{lap.rpm} RPM</span>
+                                    <span className="font-bold">{lap.rpm} RPM</span>
                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-orange-400" style={{ width: `${Math.min(100, (lap.rpm / 12000) * 100)}%` }}></div>
+                                        <div className="h-full bg-orange-400 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.rpm / 15000) * 100)}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 text-[10px] text-red-500">
                                     <span>{lap.water}°C</span>
                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-red-500" style={{ width: `${Math.min(100, (lap.water / 110) * 100)}%` }}></div>
+                                        <div className="h-full bg-red-500 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.water / 110) * 100)}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 text-[10px] text-yellow-400">
                                     <span>{lap.egt || 0}°C</span>
                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-yellow-400" style={{ width: `${Math.min(100, (lap.egt / 900) * 100)}%` }}></div>
+                                        <div className="h-full bg-yellow-400 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.egt / 900) * 100)}%` }}></div>
                                     </div>
                                 </div>
                                 <div className={`text-xs font-bold ${lap.gap === '0 ms' ? 'text-[#adb5bd]' : 'text-green-400'}`}>{lap.gap}</div>
@@ -204,6 +247,7 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     unit="Km/h"
                     height={220}
                     currentIndex={currentPointIndex}
+                    onHover={(idx: number) => setCurrentPointIndex(idx)}
                 />
 
                 <AnalysisChart
@@ -213,6 +257,7 @@ export default function DataModeView({ session, selectedLaps }: DataModeViewProp
                     color="#f0ad4e"
                     height={180}
                     currentIndex={currentPointIndex}
+                    onHover={(idx: number) => setCurrentPointIndex(idx)}
                 />
             </div>
         </div>
@@ -231,7 +276,7 @@ function ControlButton({ icon, title, onClick }: { icon: React.ReactNode; title:
     );
 }
 
-function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', currentIndex }: any) {
+function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', currentIndex, onHover }: any) {
     return (
         <div className="bg-[#212529]/50 rounded-xl border border-white/5 p-4 shadow-lg backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
@@ -239,7 +284,14 @@ function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', c
             </div>
             <div style={{ height }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
+                    <LineChart
+                        data={data}
+                        onMouseMove={(e) => {
+                            if (e && e.activeTooltipIndex !== undefined) {
+                                onHover(e.activeTooltipIndex);
+                            }
+                        }}
+                    >
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                         <XAxis dataKey="index" hide />
                         <YAxis
