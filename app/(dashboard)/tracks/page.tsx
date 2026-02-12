@@ -9,31 +9,29 @@ const TracksDatabaseMap = dynamic(() => import('@/components/TracksDatabaseMap')
     loading: () => <div className="w-full h-full bg-[#aad3df] flex items-center justify-center text-gray-500">Loading Tracks Map...</div>
 });
 
-// Mock Data for Global Tracks
-const MOCK_TRACKS = [
-    { id: 1, name: "Sentul International Circuit", lat: -6.5360, lng: 106.8520, country: "Indonesia" },
-    { id: 2, name: "Mandalika International Street Circuit", lat: -8.8920, lng: 116.2950, country: "Indonesia" },
-    { id: 3, name: "Sepang International Circuit", lat: 2.7606, lng: 101.7371, country: "Malaysia" },
-    { id: 4, name: "Chang International Circuit", lat: 14.9600, lng: 103.1110, country: "Thailand" },
-    { id: 5, name: "Suzuka Circuit", lat: 34.8431, lng: 136.5410, country: "Japan" },
-    { id: 6, name: "Fuji Speedway", lat: 35.3700, lng: 138.9270, country: "Japan" },
-    { id: 7, name: "Marina Bay Street Circuit", lat: 1.2914, lng: 103.8640, country: "Singapore" },
-    { id: 8, name: "Shanghai International Circuit", lat: 31.3390, lng: 121.2220, country: "China" },
-    { id: 9, name: "Yas Marina Circuit", lat: 24.4670, lng: 54.6030, country: "UAE" },
-    { id: 10, name: "Bahrain International Circuit", lat: 26.0325, lng: 50.5106, country: "Bahrain" },
-    { id: 11, name: "Silverstone Circuit", lat: 52.0786, lng: -1.0169, country: "UK" },
-    { id: 12, name: "Monza Circuit", lat: 45.6190, lng: 9.2810, country: "Italy" },
-    { id: 13, name: "Circuit de Spa-Francorchamps", lat: 50.4372, lng: 5.9714, country: "Belgium" },
-    { id: 14, name: "Nürburgring", lat: 50.3356, lng: 6.9475, country: "Germany" },
-    { id: 15, name: "Circuit de Barcelona-Catalunya", lat: 41.5700, lng: 2.2611, country: "Spain" },
-    { id: 16, name: "Circuit of the Americas", lat: 30.1328, lng: -97.6411, country: "USA" },
-    { id: 17, name: "Interlagos Circuit", lat: -23.7036, lng: -46.6997, country: "Brazil" },
-    { id: 18, name: "Albert Park Circuit", lat: -37.8497, lng: 144.9680, country: "Australia" },
-    { id: 19, name: "Red Bull Ring", lat: 47.2197, lng: 14.7644, country: "Austria" },
-    { id: 20, name: "Hungaroring", lat: 47.5817, lng: 19.2486, country: "Hungary" },
-];
+import { useState, useEffect } from 'react';
 
 export default function TracksDatabasePage() {
+    const [tracks, setTracks] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTracks = async () => {
+            try {
+                const res = await fetch('/api/tracks/list');
+                const data = await res.json();
+                if (data.success) {
+                    setTracks(data.tracks);
+                }
+            } catch (error) {
+                console.error('Failed to load tracks', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTracks();
+    }, []);
+
     return (
         <div className="flex flex-col h-full space-y-4">
             {/* Header */}
@@ -52,8 +50,8 @@ export default function TracksDatabasePage() {
                         <MapPin className="text-white w-8 h-8" />
                     </div>
                     <div className="z-10">
-                        <h2 className="text-[#dc3545] text-3xl font-bold leading-none">48 countries</h2>
-                        <h3 className="text-black text-xl font-bold">1743 tracks in the box</h3>
+                        <h2 className="text-[#dc3545] text-3xl font-bold leading-none">Global</h2>
+                        <h3 className="text-black text-xl font-bold">{loading ? 'Loading...' : `${tracks.length} tracks in the box`}</h3>
                         <a href="#" className="text-[#007bff] text-xs hover:underline mt-1 block">
                             Automatically detected and Supported tracks
                         </a>
@@ -78,7 +76,7 @@ export default function TracksDatabasePage() {
 
             {/* Map Area */}
             <div className="flex-1 bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden relative min-h-[500px]">
-                <TracksDatabaseMap tracks={MOCK_TRACKS} />
+                <TracksDatabaseMap tracks={tracks} />
             </div>
         </div>
     );

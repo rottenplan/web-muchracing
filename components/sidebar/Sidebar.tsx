@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, AreaChart, Info, Smartphone, Globe, BarChart3, Wrench, Menu, ChevronDown, MapPin, PlusCircle } from 'lucide-react';
+import { Home, AreaChart, Info, Smartphone, Globe, BarChart3, Wrench, Menu, ChevronDown, MapPin, PlusCircle, Activity } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { useState, useEffect } from 'react';
 
@@ -38,6 +38,7 @@ export default function Sidebar() {
             <div className={`flex-1 py-4 flex flex-col ${isCollapsed ? 'items-center' : 'items-stretch'} gap-1 group overflow-y-auto`}>
                 <IconNavItem href="/" icon={<Home size={22} />} label="Homepage" active={pathname === '/'} collapsed={isCollapsed} />
                 <IconNavItem href="/dashboard" icon={<AreaChart size={22} />} label="Dashboard" active={pathname === '/dashboard'} collapsed={isCollapsed} />
+                <IconNavItem href="/live" icon={<Activity size={22} />} label="Live Telemetry" active={pathname === '/live'} collapsed={isCollapsed} />
                 <IconNavItem href="/account" icon={<Info size={22} />} label="My account" active={pathname === '/account'} collapsed={isCollapsed} />
                 <IconNavItem href="/devices" icon={<Smartphone size={22} />} label="My Device" active={pathname === '/devices'} collapsed={isCollapsed} />
 
@@ -97,6 +98,7 @@ export default function Sidebar() {
                     {!isCollapsed && isToolsOpen && (
                         <div className="bg-[#1a1e21] py-1">
                             <SubNavItem href="/settings/categories" label="Manage categories" active={pathname === '/settings/categories'} />
+                            <SubNavItem href="/engines" label="Engine Management" active={pathname === '/engines'} />
                             <SubNavItem href="/tools/gpx-to-geojson" label="GPX To GeoJson" active={pathname === '/tools/gpx-to-geojson'} />
                         </div>
                     )}

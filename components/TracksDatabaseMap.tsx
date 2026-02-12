@@ -40,8 +40,8 @@ const TracksDatabaseMap = ({ tracks }: TracksDatabaseMapProps) => {
         >
             <FixLeafletIcon />
             <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; OpenStreetMap contributors'
+                attribution='&copy; Google Maps'
+                url="http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}"
             />
 
             {tracks.map(track => (
