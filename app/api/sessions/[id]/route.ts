@@ -9,14 +9,13 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const user = await getUserFromRequest();
+        const user = await getUserFromRequest().catch(() => null);
 
-        await dbConnect();
-
-        // Find session and ensure it belongs to the user
+        // Find session in DB if not the mock ID and user exists
         let session = null;
-        if (id !== 'mock_session_id') {
+        if (id !== 'mock_session_id' && user) {
             try {
+                await dbConnect();
                 session = await Session.findOne({
                     _id: id,
                     userId: user._id
@@ -35,106 +34,57 @@ export async function GET(
 
         // --- MOCK DATA FALLBACK ---
         console.log('Returning mock session data for ID:', id);
-        const SENTUL_POINTS = [
-            { lat: -6.5355, lng: 106.8580 }, { lat: -6.5360, lng: 106.8590 },
-            { lat: -6.5370, lng: 106.8595 }, { lat: -6.5380, lng: 106.8585 },
-            { lat: -6.5385, lng: 106.8570 }, { lat: -6.5380, lng: 106.8550 },
-            { lat: -6.5370, lng: 106.8540 }, { lat: -6.5360, lng: 106.8540 },
-            { lat: -6.5350, lng: 106.8550 }, { lat: -6.5355, lng: 106.8580 }
+        const SENTUL_KARTING_POINTS = [
+            { lat: -6.5252, lng: 106.8595 }, // Start/Finish
+            { lat: -6.5245, lng: 106.8598 }, // T1
+            { lat: -6.5240, lng: 106.8605 }, // T2
+            { lat: -6.5248, lng: 106.8610 }, // T3
+            { lat: -6.5255, lng: 106.8605 }, // T4
+            { lat: -6.5260, lng: 106.8595 }, // T5
+            { lat: -6.5265, lng: 106.8585 }, // T6
+            { lat: -6.5260, lng: 106.8575 }, // T7
+            { lat: -6.5250, lng: 106.8585 }, // T8
+            { lat: -6.5252, lng: 106.8595 }  // Back to start
         ];
 
         const points = [];
         const laps = [];
         let time = Date.now();
 
-        for (let l = 0; l < 5; l++) { // 5 laps for better demo
-            for (let i = 0; i < 100; i++) {
-                const t = i / 100;
-                const idx = Math.floor(t * SENTUL_POINTS.length);
-                const p1 = SENTUL_POINTS[idx];
-                const p2 = SENTUL_POINTS[(idx + 1) % SENTUL_POINTS.length];
-                const factor = (t * SENTUL_POINTS.length) - idx;
+        const NUM_LAPS = 12;
+        const POINTS_PER_LAP = 100;
+
+        for (let l = 0; l < NUM_LAPS; l++) {
+            const lapBaseTime = 55000 + Math.random() * 2000; // ~55s to 57s lap times
+
+            for (let i = 0; i < POINTS_PER_LAP; i++) {
+                const t = i / POINTS_PER_LAP;
+                const idx = Math.floor(t * SENTUL_KARTING_POINTS.length);
+                const p1 = SENTUL_KARTING_POINTS[idx % SENTUL_KARTING_POINTS.length];
+                const p2 = SENTUL_KARTING_POINTS[(idx + 1) % SENTUL_KARTING_POINTS.length];
+                const factor = (t * SENTUL_KARTING_POINTS.length) - idx;
+
+                const isCorner = (i > 5 && i < 15) || (i > 30 && i < 45) || (i > 60 && i < 75);
+                const speed = isCorner ? 45 + Math.random() * 15 : 85 + Math.random() * 25;
+                const rpm = isCorner ? 7000 + Math.random() * 2000 : 12000 + Math.random() * 2000;
 
                 points.push({
                     time: time.toString(),
                     lat: p1.lat + (p2.lat - p1.lat) * factor,
                     lng: p1.lng + (p2.lng - p1.lng) * factor,
-                    speed: 80 + Math.sin(i / 10) * 40 + Math.random() * 10,
-                    rpm: 7000 + Math.sin(i / 10) * 3000 + Math.random() * 500
+                    speed: speed,
+                    rpm: Math.floor(rpm),
+                    alt: 20,
+                    lean: isCorner ? (Math.random() > 0.5 ? 25 : -25) : 0
                 });
-                time += 1000;
+                time += 500; // 2Hz sample rate for mock
             }
             laps.push({
                 lapNumber: l + 1,
-                lapTime: 95 + Math.random() * 5,
-                pointIndex: (l + 1) * 100 - 1,
+                lapTime: lapBaseTime / 1000,
+                pointIndex: points.length - 1,
                 valid: true,
-                S1: 28 + Math.random(), S2: 38 + Math.random(), S3: 29 + Math.random()
-            });
-        }
-
-        return NextResponse.json({
-            success: true,
-            data: {
-                _id: id,
-                name: "Simulated Session (Sentul)",
-                trackName: "Sentul International Circuit",
-                location: "Bogor, Indonesia",
-                createdAt: new Date().toISOString(),
-                startTime: new Date(Date.now() - 500000).toISOString(),
-                stats: {
-                    totalDistance: 19.8,
-                    maxSpeed: 168.5,
-                    avgSpeed: 104.2,
-                    bestLap: Math.min(...laps.map(l => l.lapTime)),
-                    lapCount: laps.length,
-                    maxRpm: 12500
-                },
-                points: points,
-                laps: laps
-            }
-        });
-
-    } catch (error) {
-        console.error('Session Detail API Error:', error);
-
-        // MOCK DATA FALLBACK (For demo purposes)
-        const SENTUL_POINTS = [
-            { lat: -6.5355, lng: 106.8580 }, { lat: -6.5360, lng: 106.8590 },
-            { lat: -6.5370, lng: 106.8595 }, { lat: -6.5380, lng: 106.8585 },
-            { lat: -6.5385, lng: 106.8570 }, { lat: -6.5380, lng: 106.8550 },
-            { lat: -6.5370, lng: 106.8540 }, { lat: -6.5360, lng: 106.8540 },
-            { lat: -6.5350, lng: 106.8550 }, { lat: -6.5355, lng: 106.8580 }
-        ];
-
-        // Generate 3 laps of mock data
-        const points = [];
-        const laps = [];
-        let time = Date.now();
-
-        for (let l = 0; l < 3; l++) {
-            for (let i = 0; i < 100; i++) {
-                const t = i / 100;
-                const idx = Math.floor(t * SENTUL_POINTS.length);
-                const p1 = SENTUL_POINTS[idx];
-                const p2 = SENTUL_POINTS[(idx + 1) % SENTUL_POINTS.length];
-                const factor = (t * SENTUL_POINTS.length) - idx;
-
-                points.push({
-                    time: time.toString(),
-                    lat: p1.lat + (p2.lat - p1.lat) * factor,
-                    lng: p1.lng + (p2.lng - p1.lng) * factor,
-                    speed: 60 + Math.random() * 60,
-                    rpm: 6000 + Math.random() * 4000
-                });
-                time += 1000;
-            }
-            laps.push({
-                lapNumber: l + 1,
-                lapTime: 100 + Math.random() * 5,
-                pointIndex: (l + 1) * 100 - 1,
-                valid: true,
-                S1: 30, S2: 40, S3: 30
+                S1: (lapBaseTime / 3000), S2: (lapBaseTime / 3000), S3: (lapBaseTime / 3000)
             });
         }
 
@@ -142,18 +92,25 @@ export async function GET(
             success: true,
             data: {
                 _id: "mock_session_id",
-                name: "Simulated Session (Sentul)",
+                name: "Sentul Karting Practice - 12 Laps",
+                trackName: "Sentul International Karting Circuit",
+                location: "Bogor, Indonesia",
                 createdAt: new Date().toISOString(),
+                startTime: new Date(Date.now() - (NUM_LAPS * 60000)).toISOString(),
                 stats: {
-                    totalDistance: 12.0,
-                    maxSpeed: 145,
-                    avgSpeed: 98,
-                    bestLap: 102.5,
-                    lapCount: 3
+                    totalDistance: 1.2 * NUM_LAPS,
+                    maxSpeed: Math.max(...points.map(p => p.speed)),
+                    avgSpeed: points.reduce((a, b) => a + b.speed, 0) / points.length,
+                    bestLap: Math.min(...laps.map(l => l.lapTime)),
+                    lapCount: laps.length,
+                    maxRpm: 14500
                 },
                 points: points,
                 laps: laps
             }
         });
+    } catch (error) {
+        console.error('Session Detail API Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
