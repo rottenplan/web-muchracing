@@ -54,24 +54,27 @@ export default function LoginPage() {
     if (resendCooldown > 0) return;
 
     setError('');
+    setLoading(true);
     try {
       const res = await fetch('/api/auth/resend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
       });
-      const data = await res.ok ? await res.json() : null;
+      const data = await res.json();
 
-      if (data?.success) {
+      if (res.ok && data.success) {
         setResendCooldown(60); // 1 minute cooldown
         if (data.debugCode) setDebugCode(data.debugCode);
         setError(''); // clear any old errors
-        alert('A new verification code has been sent to your email.');
+        alert('A new verification code has been generated (see code below).');
       } else {
-        setError(data?.message || 'Failed to resend code');
+        setError(data?.message || 'Failed to generate new code');
       }
     } catch (err) {
       setError('Connection error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
   const [error, setError] = useState('');
@@ -228,9 +231,10 @@ export default function LoginPage() {
                     <span className="text-foreground font-medium">{formData.email}</span>
                   </p>
                   {debugCode && (
-                    <div className="mt-4 p-3 bg-highlight/10 border border-highlight/30 rounded-lg">
-                      <p className="text-highlight text-xs font-bold uppercase tracking-widest mb-1">Debug Code (Development Only)</p>
-                      <p className="text-2xl font-mono text-white tracking-widest">{debugCode}</p>
+                    <div className="mt-4 p-4 bg-primary/20 border-2 border-primary rounded-xl text-center">
+                      <p className="text-primary text-[10px] font-bold uppercase tracking-[0.2em] mb-1">BYPASS CODE</p>
+                      <p className="text-4xl font-racing text-white tracking-[0.3em] font-bold">{debugCode}</p>
+                      <p className="text-[10px] text-text-secondary mt-2 italic">Copy this code to verify manually during development</p>
                     </div>
                   )}
                 </div>
