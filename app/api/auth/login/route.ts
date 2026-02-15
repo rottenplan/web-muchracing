@@ -59,15 +59,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check verification status
-    if (!user.isVerified) {
-      return NextResponse.json({
-        success: true,
-        requiresVerification: true,
-        email: user.email,
-        message: 'Please verify your email address'
-      });
-    }
 
     // Generate and save auth token
     const authToken = randomUUID();
