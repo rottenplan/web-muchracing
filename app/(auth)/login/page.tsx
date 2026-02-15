@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [debugCode, setDebugCode] = useState('');
 
   // Allowed characters: 0-9, a-z, A-Z, ! # $ % & ' ( ) * + , – . @ : ; =
   const ALLOWED_PASSWORD_CHARS = /^[0-9a-zA-Z!#$%&'()*+,\-.@:;=]*$/;
@@ -63,6 +64,7 @@ export default function LoginPage() {
 
       if (data?.success) {
         setResendCooldown(60); // 1 minute cooldown
+        if (data.debugCode) setDebugCode(data.debugCode);
         setError(''); // clear any old errors
         alert('A new verification code has been sent to your email.');
       } else {
@@ -117,6 +119,7 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         if (data.requiresVerification) {
           setIsVerifying(true);
+          if (data.debugCode) setDebugCode(data.debugCode);
           setLoading(false);
           return;
         }
@@ -224,6 +227,12 @@ export default function LoginPage() {
                     We've sent a 6-digit code to <br />
                     <span className="text-foreground font-medium">{formData.email}</span>
                   </p>
+                  {debugCode && (
+                    <div className="mt-4 p-3 bg-highlight/10 border border-highlight/30 rounded-lg">
+                      <p className="text-highlight text-xs font-bold uppercase tracking-widest mb-1">Debug Code (Development Only)</p>
+                      <p className="text-2xl font-mono text-white tracking-widest">{debugCode}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
