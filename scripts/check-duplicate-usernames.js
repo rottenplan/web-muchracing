@@ -21,20 +21,6 @@ async function check() {
     const db = mongoose.connection.db;
     const usersCollection = db.collection('users');
 
-    const duplicates = await usersCollection.aggregate([
-        {
-            $group: {
-                _id: '$name',
-                count: { $sum: 1 },
-                emails: { $push: '$email' }
-            }
-        },
-        {
-            $match: {
-                count: { $gt: 1 }
-            }
-        }
-    ]).toArray();
 
     if (duplicates.length > 0) {
         console.log('⚠️ Found duplicate usernames:');

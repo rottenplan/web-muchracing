@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         const [username, password] = credentials.split(':');
 
         const user = await User.findOne({
-            $or: [{ email: username }, { name: username }]
+            $or: [{ email: username.toLowerCase() }, { username: username.toLowerCase() }]
         });
 
         if (!user) {

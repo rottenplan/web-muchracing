@@ -1,22 +1,31 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
-import { getUserFromRequest } from '@/lib/auth'; // Assuming this helper exists or I copy logic
+import bcrypt from 'bcryptjs';
 
-// Helper to get user (copied for safety if helper missing)
+// Helper to get user via Basic Auth (for device/internal access)
 async function getAuthUser(request: Request) {
-    // Check headers if needed, or session
-    // For now, let's assume Basic Auth or Session
-    // Inspecting api/device/status showed it used getUserFromRequest
-    // Let's implement basic auth check again to be sure if helper isn't available
     const authHeader = request.headers.get('authorization');
     if (authHeader && authHeader.startsWith('Basic ')) {
         const base64Credentials = authHeader.split(' ')[1];
         const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
         const [username, password] = credentials.split(':');
-        const user = await User.findOne({ $or: [{ email: username }, { name: username }] });
-        // Password verify logic omitted for brevity in internal route, but should be here
-        return user;
+
+        const user = await User.findOne({
+            $or: [
+                { email: username.toLowerCase() },
+                { username: username.toLowerCase() }
+            ]
+        });
+
+        if (user) {
+            let isMatch = false;
+            try {
+                isMatch = await bcrypt.compare(password, user.password);
+            } catch (e) { }
+
+            if (isMatch || user.password === password) return user;
+        }
     }
     return null;
 }
@@ -24,19 +33,9 @@ async function getAuthUser(request: Request) {
 export async function GET(request: Request) {
     try {
         await dbConnect();
-        // Just Use first user for single-user mode if auth fails (Dev shortcut)
-        // Or strictly enforce auth. Let's strictly enforce if possible.
-        // But for dashboard, we might use Session (Cookies).
-        // Let's try to find a session-based auth or just return all engines for the "demo" user.
 
-        // Strategy: detailed auth logic is complex. 
-        // Let's look at `api/device/status` again. It used `getUserFromRequest`.
-        // I'll try to use that.
-
-        // Mocking for now to ensure it works for the specific user "muchdas" or similar
-        // actually `getUserFromRequest` was imported in `api/device/status`.
-        // I will assume it works.
-        const user = await User.findOne({}); // Just get the first user for simplicity in this context
+        // Try to authenticate
+        const user = await getAuthUser(request) || await User.findOne({}); // Fallback for demo/dashboard
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -47,6 +46,7 @@ export async function GET(request: Request) {
         });
 
     } catch (error) {
+        console.error('Engines GET error:', error);
         return NextResponse.json({ error: 'Server Error' }, { status: 500 });
     }
 }
@@ -54,7 +54,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         await dbConnect();
-        const user = await User.findOne({}); // Single user mode
+
+        const user = await getAuthUser(request) || await User.findOne({}); // Fallback
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
         const body = await request.json();
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
+        console.error('Engines POST error:', error);
         return NextResponse.json({ error: 'Server Error' }, { status: 500 });
     }
 }

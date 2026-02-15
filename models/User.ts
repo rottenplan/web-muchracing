@@ -4,13 +4,19 @@ const UserSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Please provide a name'],
-        unique: true,
         maxlength: [60, 'Name cannot be more than 60 characters'],
+    },
+    username: {
+        type: String,
+        required: [true, 'Please provide a username'],
+        unique: true,
+        trim: true,
+        maxlength: [30, 'Username cannot be more than 30 characters'],
         validate: {
             validator: function (v: string) {
-                return !v.includes('@');
+                return /^[a-zA-Z0-9_.]+$/.test(v);
             },
-            message: 'Username cannot contain @ symbol'
+            message: 'Username can only contain letters, numbers, underscores, and dots.'
         }
     },
     email: {

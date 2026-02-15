@@ -21,8 +21,8 @@ export async function POST(request: Request) {
     // Find user by email or username
     const user = await User.findOne({
       $or: [
-        { email: email },
-        { name: email } // 'email' variable here holds the input identifier
+        { email: email.toLowerCase() },
+        { username: email.toLowerCase() }
       ]
     });
 
@@ -81,7 +81,8 @@ export async function POST(request: Request) {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        username: user.username
       }
     });
 

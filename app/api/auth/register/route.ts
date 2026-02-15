@@ -11,19 +11,19 @@ export async function POST(request: Request) {
         await dbConnect();
 
         const body = await request.json();
-        const { email, password, name } = body;
+        const { email, password, name, username } = body;
 
         // Basic validation
-        if (!email || !password) {
+        if (!email || !password || !username) {
             return NextResponse.json(
-                { success: false, message: 'Email and password are required' },
+                { success: false, message: 'Email, password, and username are required' },
                 { status: 400 }
             );
         }
 
         // Check if user already exists
         const existingUser = await User.findOne({
-            $or: [{ email }, { name }]
+            $or: [{ email }, { username }]
         });
 
         if (existingUser) {
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
         // Create new user
         const newUser = await User.create({
             name: name || 'Racer',
+            username: username.toLowerCase(),
             email,
             password: hashedPassword,
             verificationCode,

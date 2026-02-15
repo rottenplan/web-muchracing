@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         // Decode Basic Auth
         const base64Credentials = authHeader.split(' ')[1];
         const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-        const [username, password] = credentials.split(':'); // username here is email
+        const [username, password] = credentials.split(':'); // username here is identifier
 
         if (!username || !password) {
             return NextResponse.json(
@@ -48,7 +48,10 @@ export async function GET(request: Request) {
 
         // Find user by email or username
         const user = await User.findOne({
-            $or: [{ email: username }, { name: username }]
+            $or: [
+                { email: username.toLowerCase() },
+                { username: username.toLowerCase() }
+            ]
         });
 
         if (!user) {
@@ -117,7 +120,10 @@ export async function POST(request: Request) {
         const [username, password] = credentials.split(':');
 
         const user = await User.findOne({
-            $or: [{ email: username }, { name: username }]
+            $or: [
+                { email: username.toLowerCase() },
+                { username: username.toLowerCase() }
+            ]
         });
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -272,7 +278,6 @@ export async function POST(request: Request) {
             // Update fields if present
             if (body.settings.units) user.settings.units = body.settings.units;
             if (body.settings.brightness) user.settings.brightness = body.settings.brightness;
-            // ... map other settings as needed
 
             await user.save();
         }

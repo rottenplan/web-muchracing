@@ -11,7 +11,8 @@ export default function LoginPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    name: ''
+    name: '',
+    username: ''
   });
   const [passwordError, setPasswordError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -103,7 +104,8 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          name: activeTab === 'register' ? formData.name : undefined
+          name: activeTab === 'register' ? formData.name : undefined,
+          username: activeTab === 'register' ? formData.username : undefined
         })
       });
 
@@ -358,6 +360,27 @@ export default function LoginPage() {
                         />
                         <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
                       </div>
+                    </div>
+
+                    {/* Username Field */}
+                    <div>
+                      <label className="block text-text-secondary text-sm font-medium mb-2">
+                        Username
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={formData.username}
+                          onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '') })}
+                          className="w-full bg-background-secondary border border-border-color rounded-lg px-4 py-3 pr-12 text-foreground placeholder-text-secondary focus:outline-none focus:border-primary transition"
+                          placeholder="Choose a username"
+                          required
+                        />
+                        <Zap className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
+                      </div>
+                      <p className="text-text-secondary text-[10px] mt-1 italic">
+                        Alphanumeric, underscores, and dots only.
+                      </p>
                     </div>
 
                     {/* Email Field */}

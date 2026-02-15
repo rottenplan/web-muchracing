@@ -10,9 +10,9 @@ import {
     Plus,
     ChevronDown,
     User,
-    Zap
+    Zap,
+    Mail
 } from 'lucide-react';
-
 
 export default function AccountPage() {
     // Mock User Data
@@ -55,17 +55,29 @@ export default function AccountPage() {
         alert('Password changed successfully!');
         setPasswords({ old: '', new: '', confirm: '' });
     };
-
-    const handleRemoveAccount = () => {
+    const handleRemoveAccount = async () => {
         if (confirm('Are you sure you want to remove your account? This action cannot be undone.')) {
-            alert('Account removal request submitted.');
+            try {
+                const response = await fetch('/api/auth/remove-account', {
+                    method: 'DELETE',
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Account removed successfully.');
+                    window.location.href = '/login';
+                } else {
+                    alert(data.message || 'Failed to remove account.');
+                }
+            } catch (error) {
+                console.error('Remove account error:', error);
+                alert('An error occurred during account removal.');
+            }
         }
     };
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-24">
             {/* Header with Carbon Fiber */}
-
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-6">
