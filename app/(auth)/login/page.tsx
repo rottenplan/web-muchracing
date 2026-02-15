@@ -120,12 +120,6 @@ export default function LoginPage() {
       console.log('Reg/Login Response:', data);
 
       if (res.ok && data.success) {
-        if (data.requiresVerification) {
-          setIsVerifying(true);
-          if (data.debugCode) setDebugCode(data.debugCode);
-          setLoading(false);
-          return;
-        }
 
         // Set cookie (valid for 7 days)
         const expires = new Date();
