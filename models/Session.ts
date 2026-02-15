@@ -36,6 +36,11 @@ const SessionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, // Future use: link to a Track
         ref: 'Track',
     },
+    sessionType: {
+        type: String,
+        enum: ['TRACK', 'DRAG'],
+        default: 'TRACK',
+    },
     stats: {
         totalDistance: Number, // km
         maxSpeed: Number,
@@ -44,6 +49,11 @@ const SessionSchema = new mongoose.Schema({
         totalTime: Number, // seconds
         lapCount: Number,
         bestLap: Number, // seconds
+        // Drag Metrics
+        time0to60: Number,
+        time0to100: Number,
+        time100to200: Number,
+        time400m: Number,
     },
     points: [PointSchema], // The telemetry data
     laps: [{

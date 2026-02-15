@@ -197,11 +197,14 @@ export async function POST(request: Request) {
 
             const bestLap = laps.length > 0 ? Math.min(...laps.map(l => l.lapTime)) : 0;
 
+            const isDrag = filename.toUpperCase().includes('DRAG') || body.session_type === 'DRAG';
+
             // Save to MongoDB
             const newSession = await Session.create({
                 userId: user._id,
                 name: filename.replace('.csv', ''),
                 originalFilename: filename,
+                sessionType: isDrag ? 'DRAG' : 'TRACK',
                 startTime: (() => {
                     if (points.length === 0) return new Date();
                     const ts = parseInt(points[0].time);
@@ -219,13 +222,18 @@ export async function POST(request: Request) {
                     maxRpm,
                     totalDistance: totalDistance / 1000.0, // to KM
                     lapCount: laps.length,
-                    bestLap
+                    bestLap,
+                    // Drag splits if provided in body or calculated
+                    time0to60: body.time0to60 || 0,
+                    time0to100: body.time0to100 || 0,
+                    time100to200: body.time100to200 || 0,
+                    time400m: body.time400m || 0,
                 },
                 points: points,
                 laps: laps
             });
 
-            console.log(`Saved session ${newSession._id} with ${points.length} points`);
+            console.log(`Saved ${isDrag ? 'DRAG' : 'TRACK'} session ${newSession._id} with ${points.length} points`);
 
             return NextResponse.json({
                 success: true,

@@ -8,6 +8,7 @@ import AnalysisHeader from '@/components/analysis/AnalysisHeader';
 import LapsSidebar from '@/components/analysis/LapsSidebar';
 import DataModeView from '@/components/analysis/DataModeView';
 import MapModeView from '@/components/analysis/MapModeView';
+import DragSummaryView from '@/components/analysis/DragSummaryView';
 
 export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -125,14 +126,18 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
 
                 <main className="flex-1 flex flex-col overflow-hidden">
                     {viewMode === 'data' ? (
-                        <DataModeView
-                            session={session}
-                            selectedLaps={selectedLaps}
-                            isPlaying={isPlaying}
-                            setIsPlaying={setIsPlaying}
-                            currentPointIndex={currentPointIndex}
-                            setCurrentPointIndex={setCurrentPointIndex}
-                        />
+                        session.sessionType === 'DRAG' ? (
+                            <DragSummaryView session={session} />
+                        ) : (
+                            <DataModeView
+                                session={session}
+                                selectedLaps={selectedLaps}
+                                isPlaying={isPlaying}
+                                setIsPlaying={setIsPlaying}
+                                currentPointIndex={currentPointIndex}
+                                setCurrentPointIndex={setCurrentPointIndex}
+                            />
+                        )
                     ) : (
                         <MapModeView
                             session={session}
