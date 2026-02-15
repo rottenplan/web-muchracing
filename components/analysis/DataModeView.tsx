@@ -48,6 +48,8 @@ export default function DataModeView({
     // Process session points into chart data
     const points = useMemo(() => {
         let cumulativeDist = 0;
+        const startTime = (session?.points && session.points.length > 0) ? parseFloat(session.points[0].time) : 0;
+
         return (session?.points || []).map((p: any, i: number, arr: any[]) => {
             if (i > 0) {
                 const dt = (parseFloat(p.time) - parseFloat(arr[i - 1].time)) / 1000;
@@ -55,7 +57,14 @@ export default function DataModeView({
                     cumulativeDist += (p.speed * dt) / 3.6;
                 }
             }
-            return { ...p, dist: cumulativeDist };
+            // Calculate relative time in seconds from start of session
+            const relTimeSec = (parseFloat(p.time) - startTime) / 1000;
+            return {
+                ...p,
+                dist: cumulativeDist,
+                relTime: relTimeSec,
+                formattedRelTime: formatGapTime(relTimeSec)
+            };
         });
     }, [session?.points]);
 
@@ -135,10 +144,10 @@ export default function DataModeView({
                 <div className="flex items-center justify-between">
                     {/* Professional Timer */}
                     <div className="flex flex-col">
-                        <div className="bg-[#f0ad4e] text-black px-5 py-2 font-mono text-3xl font-black rounded shadow-[0_4px_0_0_#b07d32] tracking-widest min-w-[180px] text-center">
-                            {currentPoint.time || '00:00.000'}
+                        <div className="bg-[#f0ad4e] text-black px-5 py-2 font-mono text-3xl font-black rounded shadow-[0_4px_0_0_#b07d32] tracking-widest min-w-[200px] text-center">
+                            {currentPoint.formattedRelTime || '00:00.000'}
                         </div>
-                        <span className="text-[10px] text-[#adb5bd] mt-1 font-bold uppercase tracking-tighter text-center">Waktu Telemetri</span>
+                        <span className="text-[10px] text-[#adb5bd] mt-1 font-bold uppercase tracking-tighter text-center">Waktu Telemetri (Relatif)</span>
                     </div>
 
                     {/* Playback Controls */}
@@ -321,8 +330,12 @@ function formatLapTime(seconds: number) {
     if (!seconds) return '00:00.000';
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
-    const ms = Math.round((seconds % 1) * 1000);
+    const ms = Math.floor((seconds % 1) * 1000);
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+}
+
+function formatGapTime(seconds: number) {
+    return formatLapTime(seconds);
 }
 
 function getColorForLap(index: number) {
