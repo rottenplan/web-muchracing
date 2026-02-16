@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Edit, Trash2, Upload, ChevronLeft, ChevronRight, MapPin, Download, Activity } from 'lucide-react';
+import { Search, Edit, Trash2, Upload, ChevronLeft, ChevronRight, MapPin, Download, Activity, Trophy, Zap, Gauge, History, Satellite, Settings, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import ModuleTile from '@/components/ModuleTile';
 
 // Types
 interface Session {
@@ -63,6 +64,25 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#1a1a1a] pb-24 font-sans text-white">
       <div className="space-y-6">
+
+        {/* PRO HUB - Fast Access Logic */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-white tracking-wider uppercase italic">PRO HUB</h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent"></div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <ModuleTile icon={<Trophy className="w-6 h-6" />} label="LAP TIMER" href="/laptimer" color="highlight" />
+            <ModuleTile icon={<Zap className="w-6 h-6" />} label="DRAG METER" href="/dashboard" color="primary" />
+            <ModuleTile icon={<Activity className="w-6 h-6" />} label="RPM SENSOR" href="/rpm" color="highlight" />
+            <ModuleTile icon={<Gauge className="w-6 h-6" />} label="CHART" href="/analysis" color="primary" />
+            <ModuleTile icon={<History className="w-6 h-6" />} label="MY SESSIONS" href="/sessions" color="warning" />
+            <ModuleTile icon={<Satellite className="w-6 h-6" />} label="GPS STATUS" href="/gps" color="highlight" />
+            <ModuleTile icon={<Settings className="w-6 h-6" />} label="MY DEVICE" href="/devices" color="text-secondary" />
+            <ModuleTile icon={<RefreshCw className="w-6 h-6" />} label="SYNC" href="/setup-device" color="primary" />
+          </div>
+        </div>
 
         {/* All My Sessions - Main Table Section */}
         <div className="bg-[#212529] rounded shadow-xl overflow-hidden border border-white/5">
