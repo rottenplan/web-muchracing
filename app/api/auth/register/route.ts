@@ -61,7 +61,7 @@ export async function POST(request: Request) {
                     'content-type': 'application/json'
                 },
                 body: JSON.stringify({
-                    sender: { name: 'Much Racing', email: 'muchdas@muchracing.com' },
+                    sender: { name: 'Much Racing', email: 'rottenplan0@gmail.com' },
                     to: [{ email: email, name: name || 'Racer' }],
                     subject: 'Much Racing - Verify your account',
                     htmlContent: `
