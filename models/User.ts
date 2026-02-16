@@ -56,6 +56,23 @@ const UserSchema = new mongoose.Schema({
         powerSave: { type: Number, default: 5 },
         contrast: { type: Number, default: 50 }
     },
+    // Profile Information
+    driverNumber: {
+        type: Number,
+        default: 0
+    },
+    country: {
+        type: String,
+        default: 'Indonesia'
+    },
+    category: {
+        type: String,
+        default: 'Vespa Tune Up'
+    },
+    lastConnection: {
+        type: Date,
+        default: Date.now
+    },
     tracks: {
         countries: { type: [String], default: ['Indonesia'] },
         trackCount: { type: Number, default: 0 }

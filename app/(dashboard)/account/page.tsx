@@ -71,9 +71,37 @@ export default function AccountPage() {
         fetchProfile();
     }, []);
 
-    const handleProfileUpdate = (e: React.FormEvent) => {
+    const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        alert('Modifications saved successfully!');
+        try {
+            const response = await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    driverNumber: profile.driverNumber,
+                    country: profile.country,
+                    category: profile.category,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Profile updated successfully!');
+                // Update local state with server response
+                setProfile({
+                    ...profile,
+                    lastConnection: data.user.lastConnection
+                });
+            } else {
+                alert(data.message || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            alert('An error occurred while updating profile');
+        }
     };
 
     const handlePasswordChange = (e: React.FormEvent) => {
