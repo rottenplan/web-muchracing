@@ -2,18 +2,19 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    port: parseInt(process.env.SMTP_PORT || '465'), // Try 465 for SSL/TLS
+    secure: process.env.SMTP_PORT === '465' || !process.env.SMTP_PORT, // true for 465
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
     // Adding verbose logging for debugging
     logger: true,
-    debug: true
+    debug: true,
+    pool: true // Use pooling for better performance in serverless
 });
 
-// Verify connection on startup (or first use)
+// Verify connection on startup
 transporter.verify(function (error, success) {
     if (error) {
         console.error('[SMTP Connection Error]:', error);
@@ -30,20 +31,21 @@ interface MailOptions {
 
 export async function sendEmail({ to, subject, html }: MailOptions) {
     try {
-        // Use SMTP_FROM or fallback to verified rottenplan0@gmail.com
+        // Brevo often prefers the from address to be EXACTLY the verified sender.
         const fromAddress = process.env.SMTP_FROM || 'rottenplan0@gmail.com';
 
         const info = await transporter.sendMail({
-            from: `"Much Racing" <${fromAddress}>`,
+            from: fromAddress, // Use simple address first to avoid parsing issues
             to,
             subject,
             html,
         });
         console.log('[SMTP Success]: Message sent: %s', info.messageId);
         return { success: true, messageId: info.messageId };
-    } catch (error) {
+    } catch (error: any) {
         console.error('[SMTP Error]: Failed to send email:', error);
-        // Throw the error so the API route catches it and returns 500
+        // Log more details if available
+        if (error.response) console.error('[SMTP Error Response]:', error.response);
         throw error;
     }
 }
