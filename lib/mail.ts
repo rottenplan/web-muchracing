@@ -30,9 +30,8 @@ interface MailOptions {
 
 export async function sendEmail({ to, subject, html }: MailOptions) {
     try {
-        // Use SMTP_USER or a verified email as from address. 
-        // Many SMTP relays require the from address to be authorized.
-        const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'rottenplan0@gmail.com';
+        // Use SMTP_FROM or fallback to verified rottenplan0@gmail.com
+        const fromAddress = process.env.SMTP_FROM || 'rottenplan0@gmail.com';
 
         const info = await transporter.sendMail({
             from: `"Much Racing" <${fromAddress}>`,
