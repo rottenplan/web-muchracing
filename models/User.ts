@@ -8,12 +8,13 @@ const UserSchema = new mongoose.Schema({
     },
     username: {
         type: String,
-        required: [true, 'Please provide a username'],
         unique: true,
+        sparse: true, // Allow multiple nulls for uniqueness
         trim: true,
         maxlength: [30, 'Username cannot be more than 30 characters'],
         validate: {
             validator: function (v: string) {
+                if (!v) return true; // Allow null/empty for legacy users
                 return /^[a-zA-Z0-9_.]+$/.test(v);
             },
             message: 'Username can only contain letters, numbers, underscores, and dots.'

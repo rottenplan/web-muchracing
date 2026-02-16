@@ -250,16 +250,16 @@ export async function POST(request: Request) {
 
         // Handle Telemetry Push
         if (body.type === 'telemetry') {
-            const { lat, lon, speed, rpm, sats, bat_v, bat_p } = body.data;
+            const { lat, lon, lng, speed, rpm, sats, bat_v, bat_p } = body.data;
 
             user.liveStatus = {
-                lat,
-                lng: lon, // Map lon to lng
-                speed,
-                rpm,
-                sats,
-                bat_v,
-                bat_p,
+                lat: lat || 0,
+                lng: lng || lon || 0, // Handle both potential key names
+                speed: speed || 0,
+                rpm: rpm || 0,
+                sats: sats || 0,
+                bat_v: bat_v || 0,
+                bat_p: bat_p || 0,
                 is_live: true,
                 lastUpdate: new Date()
             };

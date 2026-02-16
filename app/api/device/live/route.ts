@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         // Update User liveStatus in MongoDB
         user.liveStatus = {
             lat: telemetry.lat || 0,
-            lng: telemetry.lng || 0,
+            lng: telemetry.lng || telemetry.lon || 0, // Handle both lng and lon
             speed: telemetry.speed || 0,
             rpm: telemetry.rpm || 0,
             sats: telemetry.sats || 0,
