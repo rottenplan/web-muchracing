@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { sendVerificationEmail } from '@/lib/mail';
 
 export async function POST(request: Request) {
     try {
@@ -51,42 +52,8 @@ export async function POST(request: Request) {
             codeExpires: Date.now() + 10 * 60 * 1000 // 10 minutes
         });
 
-        // Send Email using Brevo REST API
-        try {
-            const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
-                method: 'POST',
-                headers: {
-                    'accept': 'application/json',
-                    'api-key': process.env.BREVO_API_KEY || '',
-                    'content-type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sender: { name: 'Much Racing', email: 'rottenplan0@gmail.com' },
-                    to: [{ email: email, name: name || 'Racer' }],
-                    subject: 'Much Racing - Verify your account',
-                    htmlContent: `
-                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
-                            <h1 style="color: #dc2626; text-align: center;">MUCH RACING</h1>
-                            <p>Hello ${name || 'Racer'},</p>
-                            <p>Welcome to the Much Racing team! Use the code below to verify your account:</p>
-                            <div style="background: #f8fafc; padding: 20px; text-align: center; border-radius: 8px; margin: 25px 0;">
-                                <span style="font-size: 32px; font-weight: bold; letter-spacing: 10px; color: #1e293b;">${verificationCode}</span>
-                            </div>
-                            <p style="color: #64748b; font-size: 14px;">This code will expire in 10 minutes.</p>
-                        </div>
-                    `
-                })
-            });
-
-            if (!brevoRes.ok) {
-                const errorData = await brevoRes.json();
-                console.error('[Brevo Error Registration]:', JSON.stringify(errorData));
-            } else {
-                console.log('[Brevo Success Registration]: Email sent to', email);
-            }
-        } catch (emailErr) {
-            console.error('Failed to send email via Brevo:', emailErr);
-        }
+        // Send Email using Nodemailer
+        await sendVerificationEmail(email, name || 'Racer', verificationCode);
 
         return NextResponse.json({
             success: true,
