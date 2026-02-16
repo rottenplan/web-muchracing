@@ -11,6 +11,30 @@ export default function TopBar() {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
+    const [profile, setProfile] = useState({
+        username: 'Loading...',
+        email: ''
+    });
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                if (data.success) {
+                    setProfile({
+                        username: data.user.username || 'User',
+                        email: data.user.email || ''
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            }
+        };
+
+        fetchProfile();
+    }, []);
+
     const handleDisconnect = async () => {
         try {
             // Call logout API
@@ -67,8 +91,8 @@ export default function TopBar() {
                         />
                     </div>
                     <div className="hidden md:flex flex-col items-start leading-tight">
-                        <span className="text-sm font-semibold text-[#343a40]">Muchdas</span>
-                        <span className="text-[11px] text-[#6c757d]">faisalmuchdas@gmail.com</span>
+                        <span className="text-sm font-semibold text-[#343a40]">{profile.username}</span>
+                        <span className="text-[11px] text-[#6c757d]">{profile.email}</span>
                     </div>
                     {isOpen ? <ChevronUp size={14} className="text-[#adb5bd]" /> : <ChevronDown size={14} className="text-[#adb5bd]" />}
                 </button>
@@ -87,8 +111,8 @@ export default function TopBar() {
                                 />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-bold text-[#343a40]">Muchdas</span>
-                                <span className="text-xs text-[#6c757d]">faisalmuchdas@gmail.com</span>
+                                <span className="text-sm font-bold text-[#343a40]">{profile.username}</span>
+                                <span className="text-xs text-[#6c757d]">{profile.email}</span>
                             </div>
                         </div>
 

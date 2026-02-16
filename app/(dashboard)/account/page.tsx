@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Trash2,
@@ -11,19 +11,22 @@ import {
     ChevronDown,
     User,
     Zap,
-    Mail
+    Mail,
+    Loader2
 } from 'lucide-react';
 
 export default function AccountPage() {
-    // Mock User Data
+    // User Data State
     const [profile, setProfile] = useState({
-        username: 'Muchdas',
-        email: 'faisalmuchdas@gmail.com',
-        driverNumber: 190,
-        country: 'Indonesia',
-        category: 'Vespa Tune Up',
-        lastConnection: '2026-01-06 22:22:17'
+        username: '',
+        email: '',
+        driverNumber: 0,
+        country: '',
+        category: '',
+        lastConnection: ''
     });
+
+    const [loading, setLoading] = useState(true);
 
     // Mock Devices Data
     const [devices] = useState([
@@ -40,6 +43,33 @@ export default function AccountPage() {
 
     const categories = ['Vespa Tune Up', 'Sport 150cc', 'Underbone 2T', 'Supermoto'];
     const countries = ['Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Vietnam'];
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                if (data.success) {
+                    setProfile({
+                        username: data.user.username || '',
+                        email: data.user.email || '',
+                        driverNumber: data.user.driverNumber || 0,
+                        country: data.user.country || 'Indonesia',
+                        category: data.user.category || 'Vespa Tune Up',
+                        lastConnection: data.user.lastConnection || 'N/A'
+                    });
+                } else {
+                    console.error('Failed to fetch profile:', data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
 
     const handleProfileUpdate = (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,6 +104,17 @@ export default function AccountPage() {
             }
         }
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                    <p className="text-text-secondary font-racing animate-pulse">LOADING ACCOUNT...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-24">
