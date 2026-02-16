@@ -28,7 +28,9 @@ export async function sendEmail({ to, subject, html }: MailOptions) {
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('[SMTP Error]: Failed to send email:', error);
-        return { success: false, error };
+        // Throw the error so the API route catches it and returns 500
+        // This gives immediate feedback to the UI/User that email delivery failed
+        throw error;
     }
 }
 

@@ -53,6 +53,7 @@ export async function POST(request: Request) {
         });
 
         // Send Email using Nodemailer
+        console.log(`[VERIFICATION CODE DEBUG] User: ${email} | Code: ${verificationCode}`);
         await sendVerificationEmail(email, name || 'Racer', verificationCode);
 
         return NextResponse.json({

@@ -37,8 +37,6 @@ export async function POST(request: Request) {
         // Generate new 6-digit verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Send Email using Nodemailer
-        await sendNewCodeEmail(email, user.name || 'Racer', verificationCode);
 
         // Update user
         user.verificationCode = verificationCode;
