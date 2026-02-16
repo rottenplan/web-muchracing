@@ -2,25 +2,13 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-    port: parseInt(process.env.SMTP_PORT || '465'), // Try 465 for SSL/TLS
+    port: parseInt(process.env.SMTP_PORT || '465'),
     secure: process.env.SMTP_PORT === '465' || !process.env.SMTP_PORT, // true for 465
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
-    // Adding verbose logging for debugging
-    logger: true,
-    debug: true,
-    pool: true // Use pooling for better performance in serverless
-});
-
-// Verify connection on startup
-transporter.verify(function (error, success) {
-    if (error) {
-        console.error('[SMTP Connection Error]:', error);
-    } else {
-        console.log('[SMTP Connection Success]: Server is ready to take our messages');
-    }
+    pool: true
 });
 
 interface MailOptions {
@@ -31,11 +19,10 @@ interface MailOptions {
 
 export async function sendEmail({ to, subject, html }: MailOptions) {
     try {
-        // Brevo often prefers the from address to be EXACTLY the verified sender.
         const fromAddress = process.env.SMTP_FROM || 'rottenplan0@gmail.com';
 
         const info = await transporter.sendMail({
-            from: fromAddress, // Use simple address first to avoid parsing issues
+            from: `"Much Racing" <${fromAddress}>`,
             to,
             subject,
             html,
@@ -44,8 +31,6 @@ export async function sendEmail({ to, subject, html }: MailOptions) {
         return { success: true, messageId: info.messageId };
     } catch (error: any) {
         console.error('[SMTP Error]: Failed to send email:', error);
-        // Log more details if available
-        if (error.response) console.error('[SMTP Error Response]:', error.response);
         throw error;
     }
 }
