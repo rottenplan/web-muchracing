@@ -55,6 +55,14 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('Sync Track GPX Upload Error:', error);
-        return NextResponse.json({ error: 'Failed to process track GPX' }, { status: 500 });
+        console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+        });
+
+        return NextResponse.json({
+            error: 'Failed to process track GPX',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }
