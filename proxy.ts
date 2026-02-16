@@ -3,17 +3,32 @@ import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
     const token = request.cookies.get('auth_token')?.value;
-    const path = request.nextUrl.pathname;
+    const { pathname } = request.nextUrl;
 
-    // Define protected routes
-    const protectedRoutes = ['/dashboard', '/tracks', '/sessions', '/categories', '/devices', '/setup-device'];
+    // Define public vs private paths
+    const isAuthPage = pathname === '/login' || pathname === '/register';
+    const isPublicFile = pathname.match(/\.(.*)$/) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
 
-    // Check if current path starts with any protected route
-    const isProtected = protectedRoutes.some(route => path.startsWith(route));
+    if (isPublicFile) {
+        return NextResponse.next();
+    }
 
-    if (isProtected && !token) {
-        const response = NextResponse.redirect(new URL('/login', request.url));
-        return response;
+    // Redirect logic
+    if (!token) {
+        // If not logged in and trying to access anything but login/register, redirect to login
+        if (!isAuthPage) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+    } else {
+        // If logged in and trying to access auth pages, redirect to dashboard
+        if (isAuthPage) {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+
+        // If logged in and at root, redirect to dashboard
+        if (pathname === '/') {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
     }
 
     return NextResponse.next();
@@ -21,11 +36,13 @@ export function proxy(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/dashboard/:path*',
-        '/tracks/:path*',
-        '/sessions/:path*',
-        '/categories/:path*',
-        '/devices/:path*',
-        '/setup-device/:path*',
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         */
+        '/((?!api|_next/static|_next/image|favicon.ico|logo.png|helmet-avatar.png).*)',
     ],
 };
