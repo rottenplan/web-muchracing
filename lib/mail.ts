@@ -8,6 +8,18 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+    // Adding verbose logging for debugging
+    logger: true,
+    debug: true
+});
+
+// Verify connection on startup (or first use)
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('[SMTP Connection Error]:', error);
+    } else {
+        console.log('[SMTP Connection Success]: Server is ready to take our messages');
+    }
 });
 
 interface MailOptions {
