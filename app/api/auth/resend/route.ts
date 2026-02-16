@@ -37,13 +37,16 @@ export async function POST(request: Request) {
         // Generate new 6-digit verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+        // Send Email using Nodemailer
+        console.log(`[RESEND CODE DEBUG] User: ${email} | Code: ${verificationCode}`);
+        await sendNewCodeEmail(email, user.name || 'Racer', verificationCode);
 
         // Update user
         user.verificationCode = verificationCode;
         user.codeExpires = Date.now() + 10 * 60 * 1000;
         await user.save();
 
-        console.log(`[RESEND NEW CODE] To: ${email} | Code: ${verificationCode}`);
+        console.log(`[RESEND NEW CODE SUCCESS] To: ${email} | Code: ${verificationCode}`);
 
         return NextResponse.json({
             success: true,
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error('Resend Error:', error);
         return NextResponse.json(
-            { success: false, message: 'Internal server error' },
+            { success: false, message: 'Failed to send verification code. Please check server logs.' },
             { status: 500 }
         );
     }
