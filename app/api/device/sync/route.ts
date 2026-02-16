@@ -83,14 +83,22 @@ export async function GET(request: Request) {
             );
         }
 
-        // Return user's device settings
+        // Update lastConnection timestamp
+        user.lastConnection = new Date();
+        await user.save();
+
+        // Return user's device settings and profile info
         return NextResponse.json({
             success: true,
             data: {
                 settings: user.settings,
                 tracks: user.tracks,
                 engines: user.engines,
-                activeEngine: user.activeEngine
+                activeEngine: user.activeEngine,
+                profile: {
+                    username: user.username || user.name,
+                    driverNumber: user.driverNumber || 0
+                }
             },
             syncTime: new Date().toISOString()
         });
@@ -272,6 +280,9 @@ export async function POST(request: Request) {
                 is_live: true,
                 lastUpdate: new Date()
             };
+
+            // Update lastConnection on telemetry push
+            user.lastConnection = new Date();
 
             await user.save();
 
