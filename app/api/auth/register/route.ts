@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
         // Send Email using Brevo REST API
         try {
-            await fetch('https://api.brevo.com/v3/smtp/email', {
+            const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
                 method: 'POST',
                 headers: {
                     'accept': 'application/json',
@@ -77,6 +77,13 @@ export async function POST(request: Request) {
                     `
                 })
             });
+
+            if (!brevoRes.ok) {
+                const errorData = await brevoRes.json();
+                console.error('[Brevo Error Registration]:', JSON.stringify(errorData));
+            } else {
+                console.log('[Brevo Success Registration]: Email sent to', email);
+            }
         } catch (emailErr) {
             console.error('Failed to send email via Brevo:', emailErr);
         }
