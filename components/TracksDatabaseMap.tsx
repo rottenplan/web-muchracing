@@ -1,5 +1,3 @@
-'use client';
-
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin } from 'lucide-react';
@@ -22,7 +20,7 @@ const FixLeafletIcon = () => {
 
 interface TracksDatabaseMapProps {
     tracks: Array<{
-        id: number;
+        id: string | number;
         name: string;
         lat: number;
         lng: number;
@@ -41,10 +39,10 @@ const TracksDatabaseMap = ({ tracks }: TracksDatabaseMapProps) => {
             <FixLeafletIcon />
             <TileLayer
                 attribution='&copy; Google Maps'
-                url="http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}"
+                url="https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}"
             />
 
-            {tracks.map(track => (
+            {tracks && tracks.length > 0 && tracks.map(track => (
                 <CircleMarker
                     key={track.id}
                     center={[track.lat, track.lng]}
