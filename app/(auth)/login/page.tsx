@@ -17,8 +17,6 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [debugCode, setDebugCode] = useState('');
 
   // Allowed characters: 0-9, a-z, A-Z, ! # $ % & ' ( ) * + , – . @ : ; =
   const ALLOWED_PASSWORD_CHARS = /^[0-9a-zA-Z!#$%&'()*+,\-.@:;=]*$/;
