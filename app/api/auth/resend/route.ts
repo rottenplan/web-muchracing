@@ -45,10 +45,8 @@ export async function POST(request: Request) {
                     'api-key': process.env.BREVO_API_KEY || '',
                     'content-type': 'application/json'
                 },
-                body: JSON.stringify({
-                    to: [{ email: email, name: user.name || 'Racer' }],
-                    subject: 'Much Racing - New Verification Code',
-                    htmlContent: `
+                subject: 'Much Racing - New Verification Code',
+                htmlContent: `
                         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
                             <h1 style="color: #dc2626; text-align: center;">MUCH RACING</h1>
                             <p>Hello ${user.name || 'Racer'},</p>
@@ -61,36 +59,36 @@ export async function POST(request: Request) {
                             <p style="color: #94a3b8; font-size: 12px; text-align: center;">Jika anda tidak meminta kode baru, abaikan email ini.</p>
                         </div>
                     `
-                })
-            });
-
-            if (!brevoRes.ok) {
-                const errorData = await brevoRes.json();
-                console.error('[Brevo Error Resend]:', JSON.stringify(errorData));
-            } else {
-                console.log('[Brevo Success Resend]: Email sent to', email);
-            }
-        } catch (emailErr) {
-            console.error('Failed to resend email via Brevo:', emailErr);
-        }
-
-        // Update user
-        user.verificationCode = verificationCode;
-        user.codeExpires = Date.now() + 10 * 60 * 1000;
-        await user.save();
-
-        console.log(`[RESEND NEW CODE] To: ${email} | Code: ${verificationCode}`);
-
-        return NextResponse.json({
-            success: true,
-            message: 'A new verification code has been sent'
+            })
         });
 
-    } catch (error) {
-        console.error('Resend Error:', error);
-        return NextResponse.json(
-            { success: false, message: 'Internal server error' },
-            { status: 500 }
-        );
+        if (!brevoRes.ok) {
+            const errorData = await brevoRes.json();
+            console.error('[Brevo Error Resend]:', JSON.stringify(errorData));
+        } else {
+            console.log('[Brevo Success Resend]: Email sent to', email);
+        }
+    } catch (emailErr) {
+        console.error('Failed to resend email via Brevo:', emailErr);
     }
+
+    // Update user
+    user.verificationCode = verificationCode;
+    user.codeExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    console.log(`[RESEND NEW CODE] To: ${email} | Code: ${verificationCode}`);
+
+    return NextResponse.json({
+        success: true,
+        message: 'A new verification code has been sent'
+    });
+
+} catch (error) {
+    console.error('Resend Error:', error);
+    return NextResponse.json(
+        { success: false, message: 'Internal server error' },
+        { status: 500 }
+    );
+}
 }
