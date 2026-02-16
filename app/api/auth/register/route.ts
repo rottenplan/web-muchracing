@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         await dbConnect();
 
         const body = await request.json();
-        const { email, password, name, username } = body;
+        let { email, password, name, username } = body;
 
         // Basic validation
         if (!email || !password || !username) {
@@ -18,6 +18,10 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
+
+        // Normalize inputs
+        email = email.toLowerCase().trim();
+        username = username.toLowerCase().trim();
 
         // Check if user already exists
         const existingUser = await User.findOne({
@@ -45,7 +49,7 @@ export async function POST(request: Request) {
         // Create new user
         await User.create({
             name: name || 'Racer',
-            username: username.toLowerCase(),
+            username,
             email,
             password: hashedPassword,
             verificationCode,
@@ -53,20 +57,26 @@ export async function POST(request: Request) {
         });
 
         // Send Email using Nodemailer
-        console.log(`[VERIFICATION CODE DEBUG] User: ${email} | Code: ${verificationCode}`);
-        await sendVerificationEmail(email, name || 'Racer', verificationCode);
+        try {
+            console.log(`[VERIFICATION CODE DEBUG] User: ${email} | Code: ${verificationCode}`);
+            await sendVerificationEmail(email, name || 'Racer', verificationCode);
+        } catch (mailError: any) {
+            console.error('[Mail Error during registration]:', mailError);
+            // We don't return error here because the user is already created in DB.
+            // But we log it clearly.
+        }
 
         return NextResponse.json({
             success: true,
             requiresVerification: true,
-            email: email,
-            message: 'Verification code sent to your email'
+            email,
+            message: 'Registration successful. Please check your email for the verification code.'
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Registration Error:', error);
         return NextResponse.json(
-            { success: false, message: 'Internal server error' },
+            { success: false, message: error.message || 'Internal server error' },
             { status: 500 }
         );
     }

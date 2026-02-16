@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         await dbConnect();
 
         const body = await request.json();
-        const { email } = body;
+        let { email } = body;
 
         if (!email) {
             return NextResponse.json(
@@ -17,12 +17,16 @@ export async function POST(request: Request) {
             );
         }
 
+        // Normalize email
+        email = email.toLowerCase().trim();
+
         // Find user
         const user = await User.findOne({ email });
 
         if (!user) {
+            console.log(`[RESEND ERROR]: User not found for email: ${email}`);
             return NextResponse.json(
-                { success: false, message: 'User not found' },
+                { success: false, message: 'User not found. Please register again.' },
                 { status: 400 }
             );
         }
@@ -39,7 +43,15 @@ export async function POST(request: Request) {
 
         // Send Email using Nodemailer
         console.log(`[RESEND CODE DEBUG] User: ${email} | Code: ${verificationCode}`);
-        await sendNewCodeEmail(email, user.name || 'Racer', verificationCode);
+        try {
+            await sendNewCodeEmail(email, user.name || 'Racer', verificationCode);
+        } catch (mailError: any) {
+            console.error('[SMTP Error during Resend]:', mailError);
+            return NextResponse.json(
+                { success: false, message: 'Failed to send email. please check SMTP settings.', error: mailError.message },
+                { status: 500 }
+            );
+        }
 
         // Update user
         user.verificationCode = verificationCode;
@@ -53,10 +65,10 @@ export async function POST(request: Request) {
             message: 'A new verification code has been sent'
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Resend Error:', error);
         return NextResponse.json(
-            { success: false, message: 'Failed to send verification code. Please check server logs.' },
+            { success: false, message: error.message || 'Internal server error' },
             { status: 500 }
         );
     }
