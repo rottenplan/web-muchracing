@@ -3,7 +3,6 @@ import { MapPin, Edit, Trash2, ChevronLeft, ChevronRight, Search, Download, Acti
 import { getUserFromRequest } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import SessionModel from '@/models/Session';
-import GpxUploadPanel from '@/components/sessions/GpxUploadPanel';
 
 // Helper to get sessions
 async function getSessions() {
