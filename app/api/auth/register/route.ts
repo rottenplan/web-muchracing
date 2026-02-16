@@ -81,6 +81,12 @@ export async function POST(request: Request) {
             console.error('Failed to send email via Brevo:', emailErr);
         }
 
+        return NextResponse.json({
+            success: true,
+            requiresVerification: true,
+            email: email,
+            message: 'Verification code sent to your email'
+        });
 
     } catch (error) {
         console.error('Registration Error:', error);

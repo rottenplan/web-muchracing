@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Allowed characters: 0-9, a-z, A-Z, ! # $ % & ' ( ) * + , – . @ : ; =
   const ALLOWED_PASSWORD_CHARS = /^[0-9a-zA-Z!#$%&'()*+,\-.@:;=]*$/;
@@ -63,9 +64,8 @@ export default function LoginPage() {
 
       if (res.ok && data.success) {
         setResendCooldown(60); // 1 minute cooldown
-        if (data.debugCode) setDebugCode(data.debugCode);
         setError(''); // clear any old errors
-        alert('A new verification code has been generated (see code below).');
+        alert('A new verification code has been sent to your email.');
       } else {
         setError(data?.message || 'Failed to generate new code');
       }
@@ -113,11 +113,14 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      console.log('Reg/Login Response:', data);
-
-      console.log('Reg/Login Response:', data);
 
       if (res.ok && data.success) {
+        if (data.requiresVerification) {
+          setIsVerifying(true);
+          if (data.email) setFormData(prev => ({ ...prev, email: data.email }));
+          setLoading(false);
+          return;
+        }
 
         // Set cookie (valid for 7 days)
         const expires = new Date();
@@ -222,13 +225,6 @@ export default function LoginPage() {
                     We've sent a 6-digit code to <br />
                     <span className="text-foreground font-medium">{formData.email}</span>
                   </p>
-                  {debugCode && (
-                    <div className="mt-4 p-4 bg-primary/20 border-2 border-primary rounded-xl text-center">
-                      <p className="text-primary text-[10px] font-bold uppercase tracking-[0.2em] mb-1">BYPASS CODE</p>
-                      <p className="text-4xl font-racing text-white tracking-[0.3em] font-bold">{debugCode}</p>
-                      <p className="text-[10px] text-text-secondary mt-2 italic">Copy this code to verify manually during development</p>
-                    </div>
-                  )}
                 </div>
 
                 <div>
