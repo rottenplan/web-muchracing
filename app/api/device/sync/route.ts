@@ -176,21 +176,30 @@ export async function POST(request: Request) {
                     continue;
                 }
 
-                if (parts.length >= 5 && !isNaN(parseFloat(parts[0]))) {
-                    points.push({
+                // Standard Data Format: Time,Lat,Lon,Speed,Sats,Alt,Heading,RPM,AccX,AccY,Lean
+                if (parts.length >= 4 && !isNaN(parseFloat(parts[0]))) {
+                    const point: any = {
                         time: parts[0],
                         lat: parseFloat(parts[1]),
                         lng: parseFloat(parts[2]),
                         speed: parseFloat(parts[3]),
-                        rpm: parseFloat(parts[4])
-                    });
+                    };
+
+                    // Optional fields based on column index
+                    // Column 4: Sats (Skipping for point model but could be added)
+                    if (parts.length >= 6) point.alt = parseFloat(parts[5]);
+                    // Column 6: Heading (Optional)
+                    if (parts.length >= 8) point.rpm = parseFloat(parts[7]);
+                    if (parts.length >= 11) point.lean = parseFloat(parts[10]);
+
+                    points.push(point);
                 }
             }
 
             // Calculate stats
             const maxSpeed = points.length > 0 ? Math.max(...points.map((p: any) => p.speed)) : 0;
             const avgSpeed = points.length > 0 ? points.reduce((acc: number, p: any) => acc + p.speed, 0) / points.length : 0;
-            const maxRpm = points.length > 0 ? Math.max(...points.map((p: any) => p.rpm)) : 0;
+            const maxRpm = points.length > 0 ? Math.max(...points.map((p: any) => p.rpm || 0)) : 0;
 
             // Total distance (Simplified calc on server)
             let totalDistance = 0;
@@ -198,7 +207,7 @@ export async function POST(request: Request) {
                 const p1 = points[j - 1];
                 const p2 = points[j];
                 const d = haversine(p1.lat, p1.lng, p2.lat, p2.lng);
-                if (d < 1) totalDistance += d; // threshold to filter jumps
+                if (d < 1000) totalDistance += d; // threshold to filter jumps (max 1000m between points)
             }
 
             const bestLap = laps.length > 0 ? Math.min(...laps.map(l => l.lapTime)) : 0;
