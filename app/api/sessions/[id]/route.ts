@@ -113,3 +113,32 @@ export async function GET(
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const user = await getUserFromRequest();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        await dbConnect();
+
+        // Ensure session belongs to user
+        const result = await Session.deleteOne({ _id: id, userId: user._id });
+
+        if (result.deletedCount === 0) {
+            return NextResponse.json({ error: 'Session not found or unauthorized' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, message: 'Session deleted' });
+
+    } catch (error) {
+        console.error('Session Delete API Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}

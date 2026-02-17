@@ -61,6 +61,25 @@ export default function DashboardPage() {
   const startIndex = (currentPage - 1) * rowsPerPage;
   const displayedSessions = filteredSessions.slice(startIndex, startIndex + rowsPerPage);
 
+  const handleDeleteSession = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus sesi ini? Data tidak dapat dikembalikan.')) return;
+
+    try {
+      const res = await fetch(`/api/sessions/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setSessions(prev => prev.filter(s => s._id !== id));
+      } else {
+        alert('Gagal menghapus sesi.');
+      }
+    } catch (err) {
+      console.error('Error deleting session:', err);
+      alert('Terjadi kesalahan saat menghapus sesi.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#1a1a1a] pb-24 font-sans text-white">
       <div className="space-y-6">
@@ -171,7 +190,13 @@ export default function DashboardPage() {
                               <span className="text-[10px] font-black uppercase">Analisis</span>
                             </Link>
                             <button className="text-[#adb5bd] hover:text-white p-1 hover:bg-white/10 rounded transition-all"><Edit size={14} /></button>
-                            <button className="text-[#ff4d4d]/70 hover:text-[#ff4d4d] p-1 hover:bg-white/10 rounded transition-all"><Trash2 size={14} /></button>
+                            <button
+                              onClick={() => handleDeleteSession(session._id)}
+                              className="text-[#ff4d4d]/70 hover:text-[#ff4d4d] p-1 hover:bg-white/10 rounded transition-all"
+                              title="Hapus Sesi"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </td>
                       </tr>

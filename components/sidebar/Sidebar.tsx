@@ -45,7 +45,14 @@ export default function Sidebar() {
                 {/* Tracks Expandable */}
                 <div className="flex flex-col">
                     <button
-                        onClick={() => !isCollapsed && setIsTracksOpen(!isTracksOpen)}
+                        onClick={() => {
+                            if (isCollapsed) {
+                                toggleSidebar();
+                                setIsTracksOpen(true);
+                            } else {
+                                setIsTracksOpen(!isTracksOpen);
+                            }
+                        }}
                         className={`
                             h-[50px] flex items-center ${isCollapsed ? 'w-[60px] justify-center' : 'px-4 gap-3'} transition-colors
                             ${pathname.startsWith('/tracks')
@@ -77,7 +84,14 @@ export default function Sidebar() {
                 {/* Tools & Settings Expandable */}
                 <div className="flex flex-col">
                     <button
-                        onClick={() => !isCollapsed && setIsToolsOpen(!isToolsOpen)}
+                        onClick={() => {
+                            if (isCollapsed) {
+                                toggleSidebar();
+                                setIsToolsOpen(true);
+                            } else {
+                                setIsToolsOpen(!isToolsOpen);
+                            }
+                        }}
                         className={`
                             h-[50px] flex items-center ${isCollapsed ? 'w-[60px] justify-center' : 'px-4 gap-3'} transition-colors
                             ${pathname.startsWith('/settings') || pathname.startsWith('/tools')
