@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Track from '@/models/Track';
+import { getUserFromRequest } from '@/lib/auth';
 
 export async function POST(request: Request) {
     try {
         await dbConnect();
+
+        // Get user if authenticated (optional, but recommended for My Own Tracks)
+        const user = await getUserFromRequest();
+
         const body = await request.json();
         const { trackName, startLine, points, country, trackType } = body;
 
@@ -20,7 +25,8 @@ export async function POST(request: Request) {
             country: country || 'Unknown',
             type: trackType || 'Circuit',
             startLine: startLine,
-            points: points || []
+            points: points || [],
+            createdBy: user ? user._id : undefined
         });
 
         return NextResponse.json({

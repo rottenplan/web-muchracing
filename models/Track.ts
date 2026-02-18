@@ -16,6 +16,7 @@ export interface ITrack extends Document {
     }[];
     createdAt: Date;
     updatedAt: Date;
+    createdBy?: string;
 }
 
 const TrackSchema = new Schema<ITrack>({
@@ -32,6 +33,7 @@ const TrackSchema = new Schema<ITrack>({
         lat: Number,
         lng: Number
     }],
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 export default mongoose.models.Track || mongoose.model<ITrack>('Track', TrackSchema);
