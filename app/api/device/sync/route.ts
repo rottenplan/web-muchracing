@@ -258,6 +258,31 @@ export async function POST(request: Request) {
 
             console.log(`Saved ${isDrag ? 'DRAG' : 'TRACK'} session ${newSession._id} with ${points.length} points`);
 
+            // --- UPDATE ENGINE HOURS ---
+            if (user.activeEngine) {
+                // Calculate duration in Hours
+                const durationMs = newSession.stats.totalTime || (points.length > 0 ? (new Date(points[points.length - 1].time).getTime() - new Date(points[0].time).getTime()) : 0);
+
+                if (durationMs > 0) {
+                    const durationHours = durationMs / (1000 * 60 * 60);
+
+                    // Find and update the active engine
+                    if (user.engines && user.engines.length > 0) {
+                        const engineIndex = user.engines.findIndex((e: any) => e.id === user.activeEngine);
+                        if (engineIndex !== -1) {
+                            user.engines[engineIndex].hours = (user.engines[engineIndex].hours || 0) + durationHours;
+
+                            // Mongoose Mixed/Array detection often needs this
+                            user.markModified('engines');
+
+                            console.log(`Updated Engine ${user.activeEngine} hours: +${durationHours.toFixed(4)}h`);
+                        }
+                    }
+                }
+            }
+
+            await user.save();
+
             return NextResponse.json({
                 success: true,
                 message: 'Session uploaded and saved',

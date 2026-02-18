@@ -15,7 +15,9 @@ export async function GET(request: Request) {
                 name: track.name,
                 lat: track.startLine.lat,
                 lng: track.startLine.lng,
+                lon: track.startLine.lng, // Compatibility with Firmware (expects lon)
                 country: track.country,
+                pathFile: "/tracks/" + track._id.toString() + ".csv", // Tell device where to look/save
                 type: track.type,
                 // Assuming length and location might be derived or added later, keeping structure compatible
                 location: `${track.startLine.lat.toFixed(4)}, ${track.startLine.lng.toFixed(4)}`
