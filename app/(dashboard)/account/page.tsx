@@ -28,11 +28,7 @@ export default function AccountPage() {
 
     const [loading, setLoading] = useState(true);
 
-    // Mock Devices Data
-    const [devices] = useState([
-        { id: '94:89:7E:E5:12:CC', activated: true },
-        { id: '80:F3:DA:AD:59:18', activated: true }
-    ]);
+
 
     // Form States
     const [passwords, setPasswords] = useState({
@@ -340,40 +336,41 @@ export default function AccountPage() {
                             </div>
                         </div>
 
-                        {/* Devices Card */}
+                        {/* Connection Status Card */}
                         <div className="carbon-bg rounded-xl overflow-hidden shadow-lg border border-border-color">
                             <div className="p-4 border-b border-border-color flex items-center justify-between">
                                 <h3 className="text-base font-racing flex items-center gap-2 text-foreground">
                                     <Smartphone className="w-4 h-4 text-primary" />
-                                    DEVICES
+                                    CONNECTION STATUS
                                 </h3>
-                                <ChevronDown className="w-4 h-4 text-text-secondary" />
+                                <div className={`w-2 h-2 rounded-full ${profile.lastConnection !== 'N/A' && new Date(profile.lastConnection).getTime() > Date.now() - 24 * 60 * 60 * 1000 ? 'bg-highlight shadow-[0_0_8px_#00aced]' : 'bg-text-secondary'}`}></div>
                             </div>
-                            <div className="p-0">
-                                <table className="w-full text-xs">
-                                    <thead className="bg-background-secondary text-text-secondary">
-                                        <tr>
-                                            <th className="px-3 py-2 text-left w-8 font-racing">#</th>
-                                            <th className="px-3 py-2 text-left font-racing">DEVICE</th>
-                                            <th className="px-3 py-2 text-left font-racing">ACTIVE</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border-color">
-                                        {devices.map((device, index) => (
-                                            <tr key={device.id} className="hover:bg-card-bg transition">
-                                                <td className="px-3 py-2 text-text-secondary">{index + 1}</td>
-                                                <td className="px-3 py-2 font-data text-foreground">{device.id}</td>
-                                                <td className="px-3 py-2">
-                                                    <span className={`text-xs font-bold ${device.activated ? 'text-highlight' : 'text-text-secondary'}`}>
-                                                        {device.activated ? 'YES' : 'NO'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                {devices.length === 0 && (
-                                    <div className="p-4 text-center text-text-secondary italic text-sm">No devices registered</div>
+                            <div className="p-6 text-center">
+                                {profile.lastConnection !== 'N/A' ? (
+                                    <div className="space-y-2">
+                                        <div className="inline-flex items-center justify-center p-3 rounded-full bg-background-secondary border border-border-color mb-2">
+                                            <Zap className="w-6 h-6 text-highlight" />
+                                        </div>
+                                        <h4 className="text-foreground font-racing text-lg">DEVICE SYNCED</h4>
+                                        <p className="text-text-secondary text-xs">
+                                            Last active: <span className="text-highlight font-mono">{new Date(profile.lastConnection).toLocaleString()}</span>
+                                        </p>
+                                        <div className="mt-4 pt-4 border-t border-border-color">
+                                            <Link href="/devices" className="text-xs text-primary hover:underline">
+                                                Manage Device Settings &rarr;
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="inline-flex items-center justify-center p-3 rounded-full bg-background-secondary border border-border-color mb-2 opacity-50">
+                                            <Smartphone className="w-6 h-6 text-text-secondary" />
+                                        </div>
+                                        <h4 className="text-text-secondary font-racing text-lg">NO DEVICE SYNCED</h4>
+                                        <p className="text-text-secondary text-xs">
+                                            Connect your device to WiFi and perform a sync to see it here.
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>
