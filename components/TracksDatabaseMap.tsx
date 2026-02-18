@@ -31,8 +31,8 @@ interface TracksDatabaseMapProps {
 const TracksDatabaseMap = ({ tracks }: TracksDatabaseMapProps) => {
     return (
         <MapContainer
-            center={[20, 0] as [number, number]}
-            zoom={2}
+            center={[-2.5489, 118.0149] as [number, number]}
+            zoom={5}
             className="w-full h-full z-0"
             style={{ background: '#aad3df' }}
         >
