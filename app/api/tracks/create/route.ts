@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import dbConnect from '@/lib/db';
+import Track from '@/models/Track';
 
 export async function POST(request: Request) {
     try {
+        await dbConnect();
         const body = await request.json();
         const { trackName, startLine, points, country, trackType } = body;
 
@@ -14,33 +15,18 @@ export async function POST(request: Request) {
             );
         }
 
-        const dataDir = path.join(process.cwd(), 'data', 'tracks');
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
-        }
-
-        // Create sanitized filename
-        const safeName = trackName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-        const timestamp = Date.now();
-        const fileName = `${safeName}_${timestamp}.json`;
-        const filePath = path.join(dataDir, fileName);
-
-        const trackData = {
-            id: timestamp.toString(),
+        const newTrack = await Track.create({
             name: trackName,
             country: country || 'Unknown',
             type: trackType || 'Circuit',
-            startLine: startLine, // { lat, lng, bearing, width }
-            points: points || [],
-            createdAt: new Date().toISOString()
-        };
-
-        fs.writeFileSync(filePath, JSON.stringify(trackData, null, 2));
+            startLine: startLine,
+            points: points || []
+        });
 
         return NextResponse.json({
             success: true,
             message: 'Track saved successfully',
-            file: fileName
+            track: newTrack
         });
 
     } catch (error) {

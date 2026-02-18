@@ -1,43 +1,25 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import dbConnect from '@/lib/db';
+import Track from '@/models/Track';
 
 export async function GET(request: Request) {
     try {
-        const dataDir = path.join(process.cwd(), 'data', 'tracks');
+        await dbConnect();
 
-        if (!fs.existsSync(dataDir)) {
-            return NextResponse.json({ success: true, tracks: [] });
-        }
-
-        const files = fs.readdirSync(dataDir).filter(file => file.endsWith('.json'));
-        const tracks = [];
-
-        for (const file of files) {
-            try {
-                const filePath = path.join(dataDir, file);
-                const content = fs.readFileSync(filePath, 'utf8');
-                const data = JSON.parse(content);
-
-                // Format for frontend map component
-                // Component expects: id, name, lat, lng, country
-                tracks.push({
-                    id: file.replace('.json', ''), // Use filename as ID
-                    name: data.name,
-                    lat: data.startLine.lat,
-                    lng: data.startLine.lng, // Change from 'lon' to 'lng' to fix map crash
-                    country: data.country || 'Unknown',
-                    length: data.length,
-                    location: data.location
-                });
-            } catch (e) {
-                console.error(`Error reading track file ${file}:`, e);
-            }
-        }
+        const tracks = await Track.find({}).sort({ createdAt: -1 });
 
         return NextResponse.json({
             success: true,
-            tracks: tracks
+            tracks: tracks.map(track => ({
+                id: track._id.toString(),
+                name: track.name,
+                lat: track.startLine.lat,
+                lng: track.startLine.lng,
+                country: track.country,
+                type: track.type,
+                // Assuming length and location might be derived or added later, keeping structure compatible
+                location: `${track.startLine.lat.toFixed(4)}, ${track.startLine.lng.toFixed(4)}`
+            }))
         });
 
     } catch (error) {
