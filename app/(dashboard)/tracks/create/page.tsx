@@ -62,11 +62,53 @@ export default function CreateTrack() {
     };
 
     const handlePublishTrack = async () => {
+        if (!trackName.trim()) {
+            alert("Nama lintasan harus diisi.");
+            return;
+        }
         if (trackPoints.length < 3) {
             alert("Lintasan harus memiliki setidaknya 3 titik koordinat.");
             return;
         }
-        alert("Lintasan berhasil dipublikasikan!");
+
+        // Use first sector as start/finish, or fallback to first point
+        const startLocation = sectors.length > 0 ? sectors[0] : trackPoints[0];
+
+        const trackData = {
+            trackName,
+            country,
+            trackType,
+            points: trackPoints,
+            startLine: {
+                lat: startLocation.lat,
+                lng: startLocation.lng,
+                bearing: startLineBearing,
+                width: startLineWidth
+            }
+        };
+
+        try {
+            const response = await fetch('/api/tracks/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(trackData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alert("Lintasan berhasil disimpan!");
+                // Redirect to tracks list
+                window.location.href = '/tracks';
+            } else {
+                alert("Gagal menyimpan lintasan: " + (result.error || "Unknown error"));
+            }
+        } catch (error) {
+            console.error('Error saving track:', error);
+            alert("Terjadi kesalahan saat menyimpan lintasan.");
+        }
     };
 
     return (
