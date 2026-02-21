@@ -54,17 +54,26 @@ export default function MapModeView({
     setCurrentPointIndex
 }: MapModeViewProps) {
     const [showLayers, setShowLayers] = useState(false);
-    const [selectedLayer, setSelectedLayer] = useState('Google Satellite');
+    const [selectedLayer, setSelectedLayer] = useState('Satellite');
     const [heatmapMode, setHeatmapMode] = useState<'none' | 'speed' | 'braking'>('speed');
 
     const points = useMemo(() => session?.points || [], [session?.points]);
     const laps = session?.laps || [];
 
     // Map Layers
-    const layers = {
-        'Google Satellite': 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        'OpenStreetMap': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'Dark Matter': 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    const layers: Record<string, { url: string; attribution: string }> = {
+        'Satellite': {
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attribution: 'Tiles &copy; Esri'
+        },
+        'OpenStreetMap': {
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attribution: '&copy; OpenStreetMap contributors'
+        },
+        'Dark Matter': {
+            url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            attribution: '&copy; CartoDB'
+        },
     };
 
     const currentPoint = points[currentPointIndex] || {};
@@ -130,7 +139,7 @@ export default function MapModeView({
                     style={{ height: '100%', width: '100%', background: '#0a0a0a' }}
                     scrollWheelZoom={true}
                 >
-                    <TileLayer url={(layers as any)[selectedLayer]} />
+                    <TileLayer url={layers[selectedLayer].url} attribution={layers[selectedLayer].attribution} />
 
                     {/* Heatmap Segments (Speed) */}
                     {useMemo(() => {
