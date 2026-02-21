@@ -85,24 +85,34 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
 
     if (loading) {
         return (
-            <div className="flex flex-col h-screen bg-[#1a1a1a] items-center justify-center text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5bc0de] mb-4"></div>
-                <p className="text-sm font-bold uppercase tracking-widest text-[#adb5bd]">Memuat Data Sesi...</p>
+            <div className="flex flex-col h-screen bg-[#111] racing-gradient-bg items-center justify-center text-white">
+                <div className="glass-card p-12 rounded-3xl flex flex-col items-center shadow-2xl scale-110">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mb-6 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                    <p className="text-sm font-racing glow-text uppercase tracking-[0.3em] text-white">Syncing Telemetry...</p>
+                    <div className="mt-4 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-600 animate-pulse w-2/3"></div>
+                    </div>
+                </div>
             </div>
         );
     }
 
     if (error || !session) {
         return (
-            <div className="flex flex-col h-screen bg-[#1a1a1a] items-center justify-center text-white p-6 text-center">
-                <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-xl max-w-md">
-                    <h2 className="text-xl font-black text-red-500 uppercase italic mb-2">Error!</h2>
-                    <p className="text-[#adb5bd] text-sm mb-6">{error || 'Sesi tidak ditemukan'}</p>
+            <div className="flex flex-col h-screen bg-[#111] racing-gradient-bg items-center justify-center text-white p-6 text-center">
+                <div className="glass-card border-red-500/20 p-10 rounded-2xl max-w-md shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div className="text-red-500 text-3xl font-bold italic">!</div>
+                    </div>
+                    <h2 className="text-2xl font-racing text-red-500 uppercase tracking-widest mb-3">Analysis Error</h2>
+                    <p className="text-gray-400 text-xs font-medium uppercase tracking-tighter mb-8 leading-relaxed">
+                        {error || 'The requested telemetry session could not be retrieved from the cloud storage.'}
+                    </p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-[#5bc0de] text-white px-6 py-2 rounded font-black uppercase text-xs tracking-widest hover:bg-[#46a3bf] transition-all"
+                        className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-3 rounded-xl font-racing text-xs tracking-[0.2em] transition-all hover:scale-[1.02]"
                     >
-                        Coba Lagi
+                        RETRY SYNC
                     </button>
                 </div>
             </div>
@@ -110,21 +120,23 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
     }
 
     return (
-        <div className="flex flex-col h-screen bg-[#1a1a1a] text-white font-sans overflow-hidden">
+        <div className="flex flex-col h-screen bg-[#0a0a0a] racing-gradient-bg text-white font-sans overflow-hidden">
             <AnalysisHeader
                 session={session}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
             />
 
-            <div className="flex-1 flex overflow-hidden">
-                <LapsSidebar
-                    session={session}
-                    selectedLaps={selectedLaps}
-                    toggleLap={toggleLap}
-                />
+            <div className="flex-1 flex overflow-hidden p-4 gap-4">
+                <div className="w-80 h-full">
+                    <LapsSidebar
+                        session={session}
+                        selectedLaps={selectedLaps}
+                        toggleLap={toggleLap}
+                    />
+                </div>
 
-                <main className="flex-1 flex flex-col overflow-hidden">
+                <main className="flex-1 glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative bg-black/40">
                     {viewMode === 'data' ? (
                         session.sessionType === 'DRAG' ? (
                             <DragSummaryView session={session} />

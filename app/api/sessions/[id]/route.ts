@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Session from '@/models/Session';
+import TelemetryPoint from '@/models/TelemetryPoint';
 
 export async function GET(
     request: Request,
@@ -25,9 +26,15 @@ export async function GET(
         }
 
         if (session) {
+            // Fetch associated telemetry points
+            const points = await TelemetryPoint.find({ sessionId: session._id }).sort({ time: 1 }).lean();
+
             return NextResponse.json({
                 success: true,
-                data: session
+                data: {
+                    ...session.toObject ? session.toObject() : session,
+                    points: points
+                }
             });
         }
 
@@ -129,13 +136,19 @@ export async function DELETE(
         await dbConnect();
 
         // Ensure session belongs to user
-        const result = await Session.deleteOne({ _id: id, userId: user._id });
+        const sessionToDelete = await Session.findOne({ _id: id, userId: user._id });
 
-        if (result.deletedCount === 0) {
+        if (!sessionToDelete) {
             return NextResponse.json({ error: 'Session not found or unauthorized' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, message: 'Session deleted' });
+        // Delete associated telemetry points
+        await TelemetryPoint.deleteMany({ sessionId: id });
+
+        // Delete the session document
+        await Session.deleteOne({ _id: id });
+
+        return NextResponse.json({ success: true, message: 'Session and telemetry data deleted' });
 
     } catch (error) {
         console.error('Session Delete API Error:', error);

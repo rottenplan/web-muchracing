@@ -83,6 +83,7 @@ const UserSchema = new mongoose.Schema({
         hours: Number
     }],
     activeEngine: { type: Number, default: 1 },
+    deviceId: { type: String, unique: true, sparse: true },
     liveStatus: {
         lat: { type: Number, default: 0 },
         lng: { type: Number, default: 0 },

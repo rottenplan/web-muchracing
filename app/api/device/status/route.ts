@@ -12,8 +12,8 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Fetch fresh user data to get liveStatus
-        const userData = await User.findById(user._id).select('liveStatus').lean();
+        // Fetch fresh user data to get liveStatus and deviceId
+        const userData = await User.findById(user._id).select('liveStatus deviceId').lean();
 
         if (!userData || !userData.liveStatus) {
             return NextResponse.json({

@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Session from '@/models/Session';
+import TelemetryPoint from '@/models/TelemetryPoint';
 import bcrypt from 'bcryptjs';
+
+// Constants for binary LogPacket parsing
+const PACKET_HEADER = 0xAA55;
+const PACKET_SIZE = 32;
+const MAGIC_BMCR = 0x52434D42; // "BMCR" reversed for little-endian
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
     const R = 6371e3; // meters
@@ -83,6 +89,14 @@ export async function GET(request: Request) {
             );
         }
 
+        // Capture Device ID from query params if not linked
+        const { searchParams } = new URL(request.url);
+        const deviceId = searchParams.get('deviceId');
+        if (deviceId && !user.deviceId) {
+            user.deviceId = deviceId;
+            console.log(`Linked device ${deviceId} to user ${user.email} (via GET)`);
+        }
+
         // Update lastConnection timestamp
         user.lastConnection = new Date();
         await user.save();
@@ -95,6 +109,7 @@ export async function GET(request: Request) {
                 tracks: user.tracks,
                 engines: user.engines,
                 activeEngine: user.activeEngine,
+                deviceId: user.deviceId, // Return stored identifier
                 profile: {
                     username: user.username || user.name,
                     driverNumber: user.driverNumber || 0
@@ -158,49 +173,118 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
+        // Capture Device ID if provided
+        if (body.deviceId && !user.deviceId) {
+            user.deviceId = body.deviceId;
+            await user.save();
+            console.log(`Linked device ${body.deviceId} to user ${user.email}`);
+        }
+
         // Handle Session Upload
         if (body.type === 'upload_session') {
-            const { filename, csv_data } = body;
-            console.log(`Receiving session: ${filename} for user ${user.email}`);
+            const { filename, is_base64 } = body;
+            let { csv_data } = body;
 
-            const lines = csv_data.split('\n');
+            if (is_base64) {
+                csv_data = Buffer.from(csv_data, 'base64');
+            } else {
+                csv_data = Buffer.from(csv_data, 'utf-8');
+            }
+
+            console.log(`Receiving session: ${filename} for user ${user.email} (${csv_data.length} bytes)`);
+
             const points = [];
             const laps = [];
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line || line.startsWith('Time')) continue;
+            // Check for Binary Format (BMCR)
+            const isBinary = csv_data.length >= 4 && csv_data.readUInt32LE(0) === MAGIC_BMCR;
 
-                const parts = line.split(',');
+            if (isBinary) {
+                console.log(`Processing binary session: ${filename}`);
+                let offset = 4;
+                while (offset + PACKET_SIZE <= csv_data.length) {
+                    const header = csv_data.readUInt16LE(offset);
+                    if (header === PACKET_HEADER) {
+                        const packet = {
+                            timestamp: csv_data.readUInt32LE(offset + 2),
+                            lat: csv_data.readInt32LE(offset + 6) / 1e7,
+                            lon: csv_data.readInt32LE(offset + 10) / 1e7,
+                            speed: csv_data.readUInt16LE(offset + 14) / 10.0,
+                            rpm: csv_data.readUInt16LE(offset + 16),
+                            accX: csv_data.readInt16LE(offset + 18) / 100.0,
+                            accY: csv_data.readInt16LE(offset + 20) / 100.0,
+                            accZ: csv_data.readInt16LE(offset + 22) / 100.0,
+                            sats: csv_data.readUInt8(offset + 24),
+                            fix: csv_data.readUInt8(offset + 25),
+                            battery: csv_data.readUInt8(offset + 26),
+                            tilt: csv_data.readInt16LE(offset + 27) / 10.0
+                        };
 
-                if (line.startsWith('LAP,')) {
-                    // Format: LAP,Count,Time_ms
-                    laps.push({
-                        lapNumber: parseInt(parts[1]),
-                        lapTime: parseFloat(parts[2]) / 1000.0,
-                        pointIndex: points.length - 1, // Store the last index
-                        valid: true
-                    });
-                    continue;
+                        points.push({
+                            time: packet.timestamp.toString(),
+                            lat: packet.lat,
+                            lng: packet.lon,
+                            speed: packet.speed,
+                            rpm: packet.rpm,
+                            lean: packet.tilt,
+                            accX: packet.accX,
+                            accY: packet.accY,
+                            accZ: packet.accZ
+                        });
+                        offset += PACKET_SIZE;
+                    } else {
+                        // Metadata or string in binary file?
+                        // Read until next newline or next AA55
+                        const sub = csv_data.subarray(offset);
+                        const lineEnd = sub.indexOf(10); // \n
+                        if (lineEnd !== -1) {
+                            const line = sub.subarray(0, lineEnd).toString().trim();
+                            if (line.startsWith('LAP,')) {
+                                const parts = line.split(',');
+                                laps.push({
+                                    lapNumber: parseInt(parts[1]),
+                                    lapTime: parseFloat(parts[2]) / 1000.0,
+                                    pointIndex: points.length - 1,
+                                    valid: true
+                                });
+                            }
+                            offset += lineEnd + 1;
+                        } else {
+                            offset++; // Skip byte and search
+                        }
+                    }
                 }
+            } else {
+                // Legacy CSV parsing
+                const lines = csv_data.toString().split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.startsWith('Time')) continue;
 
-                // Standard Data Format: Time,Lat,Lon,Speed,Sats,Alt,Heading,RPM,AccX,AccY,Lean
-                if (parts.length >= 4 && !isNaN(parseFloat(parts[0]))) {
-                    const point: any = {
-                        time: parts[0],
-                        lat: parseFloat(parts[1]),
-                        lng: parseFloat(parts[2]),
-                        speed: parseFloat(parts[3]),
-                    };
+                    const parts = line.split(',');
 
-                    // Optional fields based on column index
-                    // Column 4: Sats (Skipping for point model but could be added)
-                    if (parts.length >= 6) point.alt = parseFloat(parts[5]);
-                    // Column 6: Heading (Optional)
-                    if (parts.length >= 8) point.rpm = parseFloat(parts[7]);
-                    if (parts.length >= 11) point.lean = parseFloat(parts[10]);
+                    if (line.startsWith('LAP,')) {
+                        laps.push({
+                            lapNumber: parseInt(parts[1]),
+                            lapTime: parseFloat(parts[2]) / 1000.0,
+                            pointIndex: points.length - 1,
+                            valid: true
+                        });
+                        continue;
+                    }
 
-                    points.push(point);
+                    if (parts.length >= 4 && !isNaN(parseFloat(parts[0]))) {
+                        const point: any = {
+                            time: parts[0],
+                            lat: parseFloat(parts[1]),
+                            lng: parseFloat(parts[2]),
+                            speed: parseFloat(parts[3]),
+                        };
+                        if (parts.length >= 6) point.alt = parseFloat(parts[5]);
+                        if (parts.length >= 8) point.rpm = parseFloat(parts[7]);
+                        if (parts.length >= 11) point.lean = parseFloat(parts[10]);
+                        points.push(point);
+                    }
                 }
             }
 
@@ -222,7 +306,7 @@ export async function POST(request: Request) {
 
             const isDrag = filename.toUpperCase().includes('DRAG') || body.session_type === 'DRAG';
 
-            // Save to MongoDB
+            // Save Session metadata to MongoDB
             const newSession = await Session.create({
                 userId: user._id,
                 name: filename.replace('.csv', ''),
@@ -231,9 +315,7 @@ export async function POST(request: Request) {
                 startTime: (() => {
                     if (points.length === 0) return new Date();
                     const ts = parseInt(points[0].time);
-                    // Check if timestamp is before Jan 1 2000 (likely millis or 1970 bug)
                     if (isNaN(ts) || ts < 946684800000) {
-                        console.warn(`[Sync] Fixed invalid/1970 timestamp: ${ts} -> using current time`);
                         return new Date();
                     }
                     return new Date(ts);
@@ -243,20 +325,38 @@ export async function POST(request: Request) {
                     maxSpeed,
                     avgSpeed,
                     maxRpm,
-                    totalDistance: totalDistance / 1000.0, // to KM
+                    totalDistance: totalDistance / 1000.0,
                     lapCount: laps.length,
                     bestLap,
-                    // Drag splits if provided in body or calculated
                     time0to60: body.time0to60 || 0,
                     time0to100: body.time0to100 || 0,
                     time100to200: body.time100to200 || 0,
                     time400m: body.time400m || 0,
                 },
-                points: points,
                 laps: laps
             });
 
-            console.log(`Saved ${isDrag ? 'DRAG' : 'TRACK'} session ${newSession._id} with ${points.length} points`);
+            // Bulk Insert Telemetry Points
+            if (points.length > 0) {
+                const pointsToInsert = points.map(p => ({
+                    sessionId: newSession._id,
+                    time: parseInt(p.time),
+                    lat: p.lat,
+                    lng: p.lng,
+                    speed: p.speed,
+                    rpm: p.rpm,
+                    alt: p.alt,
+                    lean: p.lean,
+                    sats: p.sats,
+                    vbat: p.vbat
+                }));
+
+                // Use bulkWrite or insertMany for efficiency
+                await TelemetryPoint.insertMany(pointsToInsert, { ordered: false });
+                console.log(`Bulk inserted ${pointsToInsert.length} telemetry points for session ${newSession._id}`);
+            }
+
+            console.log(`Saved ${isDrag ? 'DRAG' : 'TRACK'} session metadata ${newSession._id}`);
 
             // --- UPDATE ENGINE HOURS ---
             if (user.activeEngine) {

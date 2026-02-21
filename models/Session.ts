@@ -1,15 +1,5 @@
 import mongoose from 'mongoose';
 
-const PointSchema = new mongoose.Schema({
-    time: String,
-    lat: Number,
-    lng: Number,
-    speed: Number, // km/h
-    rpm: Number,
-    alt: Number,   // Altitude if available
-    lean: Number,  // Lean angle if available
-}, { _id: false });
-
 const SessionSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -55,11 +45,10 @@ const SessionSchema = new mongoose.Schema({
         time100to200: Number,
         time400m: Number,
     },
-    points: [PointSchema], // The telemetry data
     laps: [{
         lapNumber: Number,
         lapTime: Number, // seconds
-        pointIndex: Number, // Index in the points array where this lap ENDS
+        pointIndex: Number, // Still kept for backward/metadata mapping
         S1: Number,
         S2: Number,
         S3: Number,
