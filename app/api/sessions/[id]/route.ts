@@ -38,59 +38,79 @@ export async function GET(
             });
         }
 
-        // --- MOCK DATA FALLBACK ---
-        console.log('Returning mock session data for ID:', id);
+        // --- HIGH-FIDELITY MOCK DATA GENERATOR ---
         const SENTUL_KARTING_POINTS = [
-            { lat: -6.5252, lng: 106.8595 }, // Start/Finish
-            { lat: -6.5245, lng: 106.8598 }, // T1
-            { lat: -6.5240, lng: 106.8605 }, // T2
-            { lat: -6.5248, lng: 106.8610 }, // T3
-            { lat: -6.5255, lng: 106.8605 }, // T4
-            { lat: -6.5260, lng: 106.8595 }, // T5
-            { lat: -6.5265, lng: 106.8585 }, // T6
-            { lat: -6.5260, lng: 106.8575 }, // T7
-            { lat: -6.5250, lng: 106.8585 }, // T8
-            { lat: -6.5252, lng: 106.8595 }  // Back to start
+            { lat: -6.52520, lng: 106.85950 }, // Start/Finish
+            { lat: -6.52450, lng: 106.85980 }, // T1 (Right)
+            { lat: -6.52400, lng: 106.86050 }, // T2 (Right)
+            { lat: -6.52480, lng: 106.86100 }, // T3 (Right)
+            { lat: -6.52550, lng: 106.86050 }, // T4 (Straight)
+            { lat: -6.52600, lng: 106.85950 }, // T5 (Left Hairpin)
+            { lat: -6.52650, lng: 106.85850 }, // T6 (Left)
+            { lat: -6.52600, lng: 106.85750 }, // T7 (Right)
+            { lat: -6.52500, lng: 106.85850 }, // T8 (Final Straight)
+            { lat: -6.52520, lng: 106.85950 }  // Back to start
         ];
 
         const points = [];
         const laps = [];
-        let time = Date.now();
+        let globalTime = Date.now();
 
-        const NUM_LAPS = 12;
-        const POINTS_PER_LAP = 100;
+        const NUM_LAPS = 20;
+        const POINTS_PER_LAP = 120; // Smoother traces
 
         for (let l = 0; l < NUM_LAPS; l++) {
-            const lapBaseTime = 55000 + Math.random() * 2000; // ~55s to 57s lap times
+            // Realistic variation: Laps get faster as tires warm up
+            const tireFactor = Math.max(0.95, 1.05 - (l * 0.005));
+            const lapBaseTime = (54000 + Math.random() * 1500) * tireFactor;
 
             for (let i = 0; i < POINTS_PER_LAP; i++) {
-                const t = i / POINTS_PER_LAP;
-                const idx = Math.floor(t * SENTUL_KARTING_POINTS.length);
-                const p1 = SENTUL_KARTING_POINTS[idx % SENTUL_KARTING_POINTS.length];
-                const p2 = SENTUL_KARTING_POINTS[(idx + 1) % SENTUL_KARTING_POINTS.length];
-                const factor = (t * SENTUL_KARTING_POINTS.length) - idx;
+                const progress = i / POINTS_PER_LAP;
+                const pathIdx = Math.floor(progress * (SENTUL_KARTING_POINTS.length - 1));
+                const p1 = SENTUL_KARTING_POINTS[pathIdx];
+                const p2 = SENTUL_KARTING_POINTS[pathIdx + 1];
+                const segmentProgress = (progress * (SENTUL_KARTING_POINTS.length - 1)) - pathIdx;
 
-                const isCorner = (i > 5 && i < 15) || (i > 30 && i < 45) || (i > 60 && i < 75);
-                const speed = isCorner ? 45 + Math.random() * 15 : 85 + Math.random() * 25;
-                const rpm = isCorner ? 7000 + Math.random() * 2000 : 12000 + Math.random() * 2000;
+                // Physics Simulation
+                const isCorner = (progress > 0.05 && progress < 0.25) || (progress > 0.45 && progress < 0.65) || (progress > 0.80 && progress < 0.95);
+                const isFinalStraight = progress > 0.95 || progress < 0.05;
+
+                // Speed logic: Straights 120-145kmh, Corners 45-65kmh
+                let targetSpeed = isCorner ? 50 + Math.random() * 10 : 130 + Math.random() * 15;
+                if (isFinalStraight) targetSpeed = 155 + Math.random() * 5;
+
+                // Lean logic: Left/Right based on progress
+                let targetLean = 0;
+                if (progress > 0.1 && progress < 0.3) targetLean = 38; // Right corners
+                if (progress > 0.5 && progress < 0.7) targetLean = -42; // Left hairpin
+                if (progress > 0.8 && progress < 0.9) targetLean = 25; // Final chicane
+
+                // DECELERATION PROFILE for AI Braking Detection
+                const isBrakingZone = (progress > 0.03 && progress < 0.08) || (progress > 0.42 && progress < 0.48);
+                const speed = isBrakingZone ? (140 - (progress * 50)) : targetSpeed;
 
                 points.push({
-                    time: time.toString(),
-                    lat: p1.lat + (p2.lat - p1.lat) * factor,
-                    lng: p1.lng + (p2.lng - p1.lng) * factor,
+                    time: globalTime.toString(),
+                    lat: p1.lat + (p2.lat - p1.lat) * segmentProgress + (Math.random() * 0.00002), // Small GPS jitter
+                    lng: p1.lng + (p2.lng - p1.lng) * segmentProgress + (Math.random() * 0.00002),
                     speed: speed,
-                    rpm: Math.floor(rpm),
-                    alt: 20,
-                    lean: isCorner ? (Math.random() > 0.5 ? 25 : -25) : 0
+                    rpm: isBrakingZone ? 5000 + (Math.random() * 1000) : 11000 + (Math.random() * 3000),
+                    alt: 20 + Math.random(),
+                    lean: targetLean + (Math.random() * 4 - 2), // Some wobble
+                    gforce: isBrakingZone ? -1.2 - Math.random() : 0.8 + Math.random(),
+                    water: 82 + Math.random() * 5
                 });
-                time += 500; // 2Hz sample rate for mock
+                globalTime += 100; // 10Hz sampling (Standard)
             }
+
             laps.push({
                 lapNumber: l + 1,
                 lapTime: lapBaseTime / 1000,
                 pointIndex: points.length - 1,
                 valid: true,
-                S1: (lapBaseTime / 3000), S2: (lapBaseTime / 3000), S3: (lapBaseTime / 3000)
+                S1: (lapBaseTime / 3000),
+                S2: (lapBaseTime / 3000),
+                S3: (lapBaseTime / 3000)
             });
         }
 
@@ -98,18 +118,18 @@ export async function GET(
             success: true,
             data: {
                 _id: "mock_session_id",
-                name: "Sentul Karting Practice - 12 Laps",
+                name: "Sentul Pro Practice - Phase 3 Demo",
                 trackName: "Sentul International Karting Circuit",
                 location: "Bogor, Indonesia",
                 createdAt: new Date().toISOString(),
-                startTime: new Date(Date.now() - (NUM_LAPS * 60000)).toISOString(),
+                startTime: new Date(Date.now() - 3600000).toISOString(),
                 stats: {
                     totalDistance: 1.2 * NUM_LAPS,
                     maxSpeed: Math.max(...points.map(p => p.speed)),
                     avgSpeed: points.reduce((a, b) => a + b.speed, 0) / points.length,
                     bestLap: Math.min(...laps.map(l => l.lapTime)),
                     lapCount: laps.length,
-                    maxRpm: 14500
+                    maxRpm: 15200
                 },
                 points: points,
                 laps: laps
