@@ -9,6 +9,7 @@ import LapsSidebar from '@/components/analysis/LapsSidebar';
 import DataModeView from '@/components/analysis/DataModeView';
 import MapModeView from '@/components/analysis/MapModeView';
 import DragSummaryView from '@/components/analysis/DragSummaryView';
+import AIInsightsView from '@/components/analysis/AIInsightsView';
 
 export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -18,7 +19,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
     const [error, setError] = useState<string | null>(null);
 
     // State for View Mode
-    const [viewMode, setViewMode] = useState<'data' | 'map'>('data');
+    const [viewMode, setViewMode] = useState<'data' | 'map' | 'ai'>('data');
     const [selectedLaps, setSelectedLaps] = useState<number[]>([]);
 
     // Playback State (Lifted for cross-view synchronization)
@@ -150,7 +151,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
                                 setCurrentPointIndex={setCurrentPointIndex}
                             />
                         )
-                    ) : (
+                    ) : viewMode === 'map' ? (
                         <MapModeView
                             session={session}
                             selectedLaps={selectedLaps}
@@ -158,6 +159,11 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
                             setIsPlaying={setIsPlaying}
                             currentPointIndex={currentPointIndex}
                             setCurrentPointIndex={setCurrentPointIndex}
+                        />
+                    ) : (
+                        <AIInsightsView
+                            session={session}
+                            selectedLaps={selectedLaps}
                         />
                     )}
                 </main>

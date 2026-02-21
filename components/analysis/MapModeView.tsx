@@ -55,6 +55,7 @@ export default function MapModeView({
 }: MapModeViewProps) {
     const [showLayers, setShowLayers] = useState(false);
     const [selectedLayer, setSelectedLayer] = useState('Google Satellite');
+    const [heatmapMode, setHeatmapMode] = useState<'none' | 'speed' | 'braking'>('speed');
 
     const points = useMemo(() => session?.points || [], [session?.points]);
     const laps = session?.laps || [];
@@ -131,13 +132,51 @@ export default function MapModeView({
                 >
                     <TileLayer url={(layers as any)[selectedLayer]} />
 
-                    {trackPath.length > 0 && (
-                        <Polyline
-                            positions={trackPath as any}
-                            color="#5bc0de"
-                            weight={4}
-                            opacity={0.6}
-                        />
+                    {/* Heatmap Segments (Speed) */}
+                    {useMemo(() => {
+                        const segments = [];
+                        for (let i = 1; i < points.length; i++) {
+                            const p1 = points[i - 1];
+                            const p2 = points[i];
+                            // Map speed (0-160) to a color gradient (Blue -> Green -> Yellow -> Red)
+                            const speed = p2.speed || 0;
+                            let color = '#5bc0de'; // Default blue
+                            if (speed > 120) color = '#ff4d4d'; // Red
+                            else if (speed > 80) color = '#f0ad4e'; // Orange/Yellow
+                            else if (speed > 40) color = '#00ffa2'; // green
+
+                            segments.push(
+                                <Polyline
+                                    key={`seg-${i}`}
+                                    positions={[[p1.lat, p1.lng], [p2.lat, p2.lng]] as any}
+                                    color={color}
+                                    weight={6}
+                                    opacity={0.8}
+                                />
+                            );
+                        }
+                        return segments;
+                    }, [points])}
+
+                    {/* Ghost Laps (Selected Laps logic) */}
+                    {selectedLaps.length > 1 && (
+                        laps.filter((l: any) => selectedLaps.includes(l.lapNumber)).map((lap: any) => {
+                            // Find points for this lap
+                            const lapStartIdx = laps.indexOf(lap) === 0 ? 0 : laps[laps.indexOf(lap) - 1].pointIndex + 1;
+                            const lapPoints = points.slice(lapStartIdx, lap.pointIndex + 1);
+                            const path = lapPoints.map((p: any) => [p.lat, p.lng]);
+
+                            return (
+                                <Polyline
+                                    key={`ghost-lap-${lap.lapNumber}`}
+                                    positions={path as any}
+                                    color={lap.lapNumber === 1 ? '#00aced' : '#ff00ff'} // Cycle colors
+                                    weight={2}
+                                    opacity={0.4}
+                                    dashArray="5, 10"
+                                />
+                            );
+                        })
                     )}
 
                     {currentPoint.lat && (

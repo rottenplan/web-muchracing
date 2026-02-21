@@ -1,11 +1,23 @@
 'use client';
 
-import { Activity, Clock, Gauge, Hash, Map as MapIcon, Share2, Download, Printer } from 'lucide-react';
+import {
+    Activity,
+    Clock,
+    Gauge,
+    Hash,
+    Map as MapIcon,
+    Share2,
+    Download,
+    Printer,
+    Brain,
+    BarChart3,
+    MapPin
+} from 'lucide-react';
 
 interface AnalysisHeaderProps {
     session: any;
-    viewMode: 'data' | 'map';
-    setViewMode: (mode: 'data' | 'map') => void;
+    viewMode: 'data' | 'map' | 'ai';
+    setViewMode: (mode: 'data' | 'map' | 'ai') => void;
 }
 
 export default function AnalysisHeader({ session, viewMode, setViewMode }: AnalysisHeaderProps) {
@@ -42,26 +54,24 @@ export default function AnalysisHeader({ session, viewMode, setViewMode }: Analy
             </div>
 
             {/* Right: View Switcher */}
-            <div className="flex bg-black/50 rounded-xl p-1 border border-white/5 shadow-inner">
+            <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 shadow-inner">
                 <button
                     onClick={() => setViewMode('data')}
-                    className={`flex items-center gap-2.5 px-6 py-2 text-[10px] font-racing uppercase tracking-[0.2em] rounded-lg transition-all ${viewMode === 'data'
-                        ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                        : 'text-gray-500 hover:text-white hover:bg-white/5'
-                        }`}
+                    className={`px-6 py-2 rounded-lg text-[10px] font-racing transition-all flex items-center gap-2 uppercase tracking-widest ${viewMode === 'data' ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'text-gray-400 hover:text-white'}`}
                 >
-                    <Activity size={14} />
-                    <span>Telemetry</span>
+                    <BarChart3 size={14} /> Data Mode
                 </button>
                 <button
                     onClick={() => setViewMode('map')}
-                    className={`flex items-center gap-2.5 px-6 py-2 text-[10px] font-racing uppercase tracking-[0.2em] rounded-lg transition-all ${viewMode === 'map'
-                        ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                        : 'text-gray-500 hover:text-white hover:bg-white/5'
-                        }`}
+                    className={`px-6 py-2 rounded-lg text-[10px] font-racing transition-all flex items-center gap-2 uppercase tracking-widest ${viewMode === 'map' ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'text-gray-400 hover:text-white'}`}
                 >
-                    <MapIcon size={14} />
-                    <span>Circuit</span>
+                    <MapPin size={14} /> Map Mode
+                </button>
+                <button
+                    onClick={() => setViewMode('ai')}
+                    className={`px-6 py-2 rounded-lg text-[10px] font-racing transition-all flex items-center gap-2 uppercase tracking-widest ${viewMode === 'ai' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.4)]' : 'text-gray-400 hover:text-white'}`}
+                >
+                    <Brain size={14} /> AI Intelligence
                 </button>
             </div>
         </header>
