@@ -132,7 +132,7 @@ export default function MapModeView({
             </div>
 
             {/* Map Layer */}
-            <div className="flex-1 relative z-[1]" style={{ minHeight: '400px' }}>
+            <div className="flex-1 relative z-[1]" style={{ height: '400px', minHeight: '400px' }}>
                 <MapContainer
                     center={center as any}
                     zoom={17}
