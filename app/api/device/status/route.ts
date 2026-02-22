@@ -18,7 +18,8 @@ export async function GET() {
         if (!userData || !userData.liveStatus) {
             return NextResponse.json({
                 last_sync: null,
-                data: { is_live: false }
+                data: { is_live: false },
+                deviceId: userData?.deviceId || null
             });
         }
 
@@ -44,7 +45,8 @@ export async function GET() {
             data: {
                 ...status,
                 timestamp: status.lastUpdate ? new Date(status.lastUpdate).getTime() : Date.now()
-            }
+            },
+            deviceId: userData.deviceId || null
         });
 
     } catch (error) {
@@ -66,7 +68,8 @@ export async function GET() {
                 bat_p: 95,
                 is_live: true,
                 timestamp: Date.now()
-            }
+            },
+            deviceId: null
         });
     }
 }

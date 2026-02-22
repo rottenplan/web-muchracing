@@ -11,6 +11,7 @@ export interface TelemetryData {
     bat_voltage?: number;
     bat_percent?: number;
     is_charging?: boolean;
+    timestamp?: number;
 }
 
 export function useLiveTelemetry() {
@@ -59,7 +60,8 @@ export function useLiveTelemetry() {
                                 sats: Number(telemetry.sats) || 0,
                                 bat_voltage: telemetry.bat_v,
                                 bat_percent: telemetry.bat_p,
-                                is_charging: telemetry.is_charging
+                                is_charging: telemetry.is_charging,
+                                timestamp: Number(telemetry.timestamp) || Date.now()
                             });
                             setConnected(telemetry.is_live || false);
                         }
@@ -98,14 +100,15 @@ export function useLiveTelemetry() {
                 try {
                     const msg = JSON.parse(message.toString());
                     setData({
-                        lat: msg.lat,
-                        lng: msg.lng,
-                        speed: msg.speed,
-                        rpm: msg.rpm,
+                        lat: Number(msg.lat) || 0,
+                        lng: Number(msg.lng ?? msg.lon) || 0,
+                        speed: Number(msg.speed) || 0,
+                        rpm: Number(msg.rpm) || 0,
                         trip: 0, // Trip not yet in MQTT broadcast
-                        sats: msg.sats,
-                        bat_voltage: msg.vbat,
-                        bat_percent: msg.pbat
+                        sats: Number(msg.sats) || 0,
+                        bat_voltage: Number(msg.vbat),
+                        bat_percent: Number(msg.pbat),
+                        timestamp: Number(msg.ts ?? msg.timestamp) || Date.now()
                     });
                     setConnected(true);
                 } catch (e) {
