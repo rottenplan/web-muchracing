@@ -119,7 +119,7 @@ export async function GET() {
 
         const session = await Session.create({
             userId: user._id,
-            name: `Simulated Session Sentul ${new Date().toLocaleTimeString()}`,
+            name: '',
             originalFilename: 'simulated_data.csv',
             startTime: new Date(startTime),
             endTime: new Date(currentTime),
