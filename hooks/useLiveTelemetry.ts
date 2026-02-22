@@ -19,6 +19,8 @@ export function useLiveTelemetry() {
     const [connected, setConnected] = useState(false);
     const [isOnline, setIsOnline] = useState(true);
     const [deviceId, setDeviceId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
     const mqttClientRef = useRef<mqtt.MqttClient | null>(null);
 
     useEffect(() => {
@@ -88,12 +90,20 @@ export function useLiveTelemetry() {
         console.log(`[MQTT] Connecting to ${brokerUrl} for device ${deviceId}`);
 
         try {
-            const client = mqtt.connect(brokerUrl);
+            const client = mqtt.connect(brokerUrl, {
+                reconnectPeriod: 2000, // 2s
+                connectTimeout: 5000,
+                keepalive: 30,
+                clientId: `web-${deviceId}-${Math.random().toString(16).slice(2)}`
+            });
             mqttClientRef.current = client;
 
             client.on('connect', () => {
                 console.log('[MQTT] Connected to broker');
                 client.subscribe(topic);
+                setConnected(true);
+                setError(null);
+                setRetryCount(0);
             });
 
             client.on('message', (t, message) => {
@@ -111,6 +121,7 @@ export function useLiveTelemetry() {
                         timestamp: Number(msg.ts ?? msg.timestamp) || Date.now()
                     });
                     setConnected(true);
+                    setError(null);
                 } catch (e) {
                     console.warn('[MQTT] Parse error', e);
                 }
@@ -118,6 +129,17 @@ export function useLiveTelemetry() {
 
             client.on('error', (err) => {
                 console.error('[MQTT] Error', err);
+                setConnected(false);
+                setError('MQTT error: ' + (err?.message || 'unknown'));
+            });
+
+            client.on('reconnect', () => {
+                setConnected(false);
+                setRetryCount((c) => c + 1);
+            });
+
+            client.on('close', () => {
+                setConnected(false);
             });
 
             return () => {
@@ -127,8 +149,9 @@ export function useLiveTelemetry() {
             };
         } catch (err) {
             console.error('[MQTT] Connection failed', err);
+            setError('MQTT connection failed');
         }
     }, [deviceId]);
 
-    return { data, connected, isOnline };
+    return { data, connected, isOnline, error, retryCount };
 }

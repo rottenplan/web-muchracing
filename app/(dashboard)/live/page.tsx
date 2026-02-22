@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Activity, Battery, MapPin, Gauge, Satellite, AlertCircle } from 'lucide-react';
 import { useLiveTelemetry } from '@/hooks/useLiveTelemetry';
@@ -12,8 +12,79 @@ const LiveMap = dynamic(() => import('@/components/LiveMap'), {
 });
 
 export default function LivePage() {
-    const { data, connected } = useLiveTelemetry();
+    const { data, connected, error, retryCount } = useLiveTelemetry();
     const [loading, setLoading] = useState(false);
+    const [deviceId, setDeviceId] = useState<string | null>(null);
+    const [recording, setRecording] = useState(false);
+    const pointsRef = useRef<Array<{ time: number; lat: number; lng: number; speed: number; rpm?: number }>>([]);
+    const [recordCount, setRecordCount] = useState(0);
+
+    useEffect(() => {
+        const fetchDeviceId = async () => {
+            try {
+                const res = await fetch('/api/device/status');
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.deviceId) setDeviceId(json.deviceId);
+                }
+            } catch (e) { }
+        };
+        fetchDeviceId();
+    }, []);
+
+    // Collect points while recording
+    useEffect(() => {
+        if (!recording) return;
+        const ts = Number((data as any)?.timestamp) || Date.now();
+        const lat = Number(data?.lat) || 0;
+        const lng = Number(data?.lng) || 0;
+        const speed = Number(data?.speed) || 0;
+        const rpm = Number(data?.rpm) || 0;
+        // push with placeholders-compatible format
+        pointsRef.current.push({ time: ts, lat, lng, speed, rpm });
+        setRecordCount(pointsRef.current.length);
+    }, [data]);
+
+    const startRecording = () => {
+        pointsRef.current = [];
+        setRecordCount(0);
+        setRecording(true);
+    };
+
+    const stopAndSaveRecording = async () => {
+        setRecording(false);
+        if (pointsRef.current.length === 0) return;
+        // Build CSV with indices to match parser expectations:
+        // time(0),lat(1),lng(2),speed(3),""(4),alt(5),""(6),rpm(7)
+        const header = 'Time,Lat,Lng,Speed,,Alt,,Rpm';
+        const csvLines = [header];
+        for (const p of pointsRef.current) {
+            const alt = ''; // not available live now
+            csvLines.push(`${p.time},${p.lat},${p.lng},${p.speed},,${alt},,${p.rpm ?? ''}`);
+        }
+        const csv = csvLines.join('\n');
+        try {
+            const res = await fetch('/api/device/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'upload_session',
+                    filename: `live_${new Date().toISOString()}.csv`,
+                    is_base64: false,
+                    csv_data: csv,
+                    session_type: 'TRACK'
+                })
+            });
+            if (!res.ok) {
+                console.error('Save session failed', await res.text());
+            }
+        } catch (e) {
+            console.error('Save session error', e);
+        } finally {
+            pointsRef.current = [];
+            setRecordCount(0);
+        }
+    };
 
     if (loading && !data) {
         return (
@@ -47,6 +118,11 @@ export default function LivePage() {
                         <h1 className="text-2xl font-racing tracking-widest text-white flex items-center gap-2">
                             LIVE TELEMETRY
                             {!isLive && <span className="text-[10px] text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 font-bold ml-2">STATIONARY / OFFLINE</span>}
+                            {deviceId && (
+                                <span className="ml-3 text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-400/20 font-bold uppercase tracking-widest">
+                                    {deviceId}
+                                </span>
+                            )}
                         </h1>
                     </div>
                     <div className="flex flex-col items-end">
@@ -54,6 +130,7 @@ export default function LivePage() {
                         <div className="text-[11px] font-data text-gray-400">
                             {lastTs ? `Last update: ${Math.max(0, Math.floor((Date.now() - lastTs) / 1000))}s ago` : 'WAITING FOR DATA...'}
                         </div>
+                        {error && <div className="text-[10px] text-red-400">MQTT: {error} {retryCount ? `(retry ${retryCount})` : ''}</div>}
                     </div>
                 </div>
 
@@ -135,6 +212,27 @@ export default function LivePage() {
                             </div>
                         </div>
                     )}
+                    {/* Recording Controls */}
+                    <div className="absolute top-4 right-4 z-[1001] flex items-center gap-2">
+                        {!recording ? (
+                            <button
+                                onClick={startRecording}
+                                className="px-3 py-2 text-xs bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold uppercase tracking-widest"
+                            >
+                                Record
+                            </button>
+                        ) : (
+                            <>
+                                <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-400/20 font-bold">{recordCount} pts</span>
+                                <button
+                                    onClick={stopAndSaveRecording}
+                                    className="px-3 py-2 text-xs bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-bold uppercase tracking-widest"
+                                >
+                                    Stop & Save
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
 
             </div>
