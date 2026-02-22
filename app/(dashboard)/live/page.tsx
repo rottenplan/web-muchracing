@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Activity, Battery, MapPin, Gauge, Satellite, AlertCircle } from 'lucide-react';
+import { useLiveTelemetry } from '@/hooks/useLiveTelemetry';
 
 // Dynamically import map to avoid SSR issues with Leaflet
 const LiveMap = dynamic(() => import('@/components/LiveMap'), {
@@ -11,40 +12,8 @@ const LiveMap = dynamic(() => import('@/components/LiveMap'), {
 });
 
 export default function LivePage() {
-    const [data, setData] = useState<any>(null);
-    const [lastSync, setLastSync] = useState<string | null>(null);
-    const [isLive, setIsLive] = useState(false);
-    const [loading, setLoading] = useState(true);
-
-    const fetchData = async () => {
-        try {
-            const res = await fetch('/api/device/status');
-            if (res.ok) {
-                const json = await res.json();
-                if (json.success && json.data) {
-                    setData(json.data);
-                    setLastSync(json.last_sync);
-
-                    // Check if data is stale (over 10 seconds)
-                    const now = Date.now();
-                    const lastUpdate = json.data.timestamp || 0;
-                    const isFresh = (now - lastUpdate) < 15000; // 15s grace
-
-                    setIsLive(isFresh);
-                }
-            }
-        } catch (err) {
-            console.error('Failed to fetch live data', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-        const interval = setInterval(fetchData, 2000); // Poll every 2s
-        return () => clearInterval(interval);
-    }, []);
+    const { data, connected } = useLiveTelemetry();
+    const [loading, setLoading] = useState(false);
 
     if (loading && !data) {
         return (
@@ -55,13 +24,15 @@ export default function LivePage() {
     }
 
     // Defatul values if data is null
-    const speed = data?.speed || 0;
-    const rpm = data?.rpm || 0;
-    const sats = data?.sats || 0;
-    const batV = data?.bat_v || 0;
-    const batP = data?.bat_p || 0;
-    const lat = data?.lat || -6.2088; // Default Jakarta
-    const lng = data?.lng || 106.8456;
+    const speed = Number(data?.speed) || 0;
+    const rpm = Number(data?.rpm) || 0;
+    const sats = Number(data?.sats) || 0;
+    const batV = Number((data as any)?.bat_voltage ?? (data as any)?.bat_v) || 0;
+    const batP = Number((data as any)?.bat_percent ?? (data as any)?.bat_p) || 0;
+    const lat = Number(data?.lat) || -6.2088; // Default Jakarta
+    const lng = Number(data?.lng) || 106.8456;
+    const lastTs = Number((data as any)?.timestamp) || 0;
+    const isLive = connected && (Date.now() - (lastTs || Date.now())) < 15000;
 
     return (
         <div className="min-h-screen bg-[#141414] racing-gradient-bg pb-24 font-sans text-white p-6">
@@ -81,7 +52,7 @@ export default function LivePage() {
                     <div className="flex flex-col items-end">
                         <span className="text-[10px] uppercase font-bold text-gray-500 tracking-tighter">Frequency: <span className="text-blue-400">10Hz via MQTT</span></span>
                         <div className="text-[11px] font-data text-gray-400">
-                            {data?.timestamp ? `Last update: ${Math.max(0, Math.floor((Date.now() - data.timestamp) / 1000))}s ago` : (lastSync ? `SYNC: ${new Date(lastSync).toLocaleTimeString()}` : 'WAITING FOR DATA...')}
+                            {lastTs ? `Last update: ${Math.max(0, Math.floor((Date.now() - lastTs) / 1000))}s ago` : 'WAITING FOR DATA...'}
                         </div>
                     </div>
                 </div>
@@ -159,7 +130,7 @@ export default function LivePage() {
                                 <AlertCircle size={48} className="animate-pulse" />
                                 <div className="text-center">
                                     <h3 className="text-xl font-racing tracking-widest">SIGNAL LOST</h3>
-                                    <p className="text-[10px] text-gray-400 font-bold tracking-tight mt-1 uppercase">Checking MQTT Stream for Device: {data?.deviceId || 'Unknown'}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold tracking-tight mt-1 uppercase">Checking MQTT Stream...</p>
                                 </div>
                             </div>
                         </div>

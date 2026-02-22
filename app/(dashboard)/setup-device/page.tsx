@@ -12,6 +12,9 @@ export default function SetupDevicePage() {
     const [accountData, setAccountData] = useState({ username: '', password: '' });
     const [wifiData, setWifiData] = useState({ ssid: '', password: '' });
     const [errorMsg, setErrorMsg] = useState('');
+    const [deviceId, setDeviceId] = useState('');
+    const [linking, setLinking] = useState(false);
+    const [linkMsg, setLinkMsg] = useState<string | null>(null);
 
     // Web Serial API Type Declaration
     // content is intentionally omitted for brevity as it's standard browser API
@@ -75,6 +78,33 @@ export default function SetupDevicePage() {
     const handleWifiSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setStep('success');
+    };
+
+    const linkDeviceNow = async () => {
+        setLinkMsg(null);
+        setLinking(true);
+        try {
+            if (!accountData.username || !accountData.password || !deviceId) {
+                setLinkMsg('Isi Username, Password, dan Device ID terlebih dahulu');
+                return;
+            }
+            const auth = 'Basic ' + btoa(`${accountData.username}:${accountData.password}`);
+            const res = await fetch(`/api/device/sync?deviceId=${encodeURIComponent(deviceId)}`, {
+                method: 'GET',
+                headers: { authorization: auth }
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                setLinkMsg(`Gagal: ${text || res.status}`);
+                return;
+            }
+            setLinkMsg('Berhasil menautkan device');
+            setStep('success');
+        } catch (e: any) {
+            setLinkMsg('Terjadi error saat menautkan device');
+        } finally {
+            setLinking(false);
+        }
     };
 
     const handleContinue = () => {
@@ -196,6 +226,32 @@ export default function SetupDevicePage() {
                                     SAVE CREDENTIALS
                                 </button>
                             </form>
+
+                            <div className="border-t border-border-color/40 pt-4">
+                                <div className="text-center mb-2">
+                                    <h3 className="text-sm font-racing text-foreground">Manual Link Device</h3>
+                                    <p className="text-[10px] text-text-secondary uppercase">Masukkan Device ID (chipId) dan tautkan sekarang</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={deviceId}
+                                        onChange={(e) => setDeviceId(e.target.value)}
+                                        placeholder="Device ID / Chip ID"
+                                        className="flex-1 bg-background-secondary border border-border-color rounded-lg px-4 py-3 text-foreground placeholder:text-text-secondary/30 focus:outline-none focus:border-primary transition font-data"
+                                    />
+                                    <button
+                                        onClick={linkDeviceNow}
+                                        disabled={linking}
+                                        className="px-4 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-racing"
+                                    >
+                                        {linking ? 'Linking...' : 'Link Now'}
+                                    </button>
+                                </div>
+                                {linkMsg && (
+                                    <div className="mt-2 text-[11px] text-text-secondary">{linkMsg}</div>
+                                )}
+                            </div>
                         </div>
                     )}
 
