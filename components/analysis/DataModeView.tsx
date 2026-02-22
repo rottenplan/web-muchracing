@@ -84,7 +84,7 @@ export default function DataModeView({
 
         const lapStartIdx = laps.indexOf(lap) === 0 ? 0 : laps[laps.indexOf(lap) - 1].pointIndex + 1;
         const lapStartDist = points[lapStartIdx]?.dist || 0;
-        const relativeDist = cp.dist - lapStartDist;
+        const relativeDist = (cp?.dist || 0) - lapStartDist;
 
         return { lapNumber: lap.lapNumber, relativeDist };
     }, [currentPointIndex, points, laps]);
@@ -122,7 +122,7 @@ export default function DataModeView({
             return {
                 id: l.lapNumber,
                 time: formatLapTime(l.lapTime),
-                dist: currentPointInLap.dist - lapStartDist,
+                dist: (currentPointInLap?.dist || 0) - lapStartDist,
                 totalLapDist: (points[l.pointIndex]?.dist || 0) - lapStartDist,
                 speed: currentPointInLap.speed || 0,
                 maxSpeed: l.maxSpeed || 150,
