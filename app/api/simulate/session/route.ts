@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Session from '@/models/Session';
+import TelemetryPoint from '@/models/TelemetryPoint';
 
 // Simple helper to generate points around a loop
 // Sentul International Circuit approximation
@@ -26,6 +27,15 @@ export async function GET() {
         const user = await User.findOne({});
         if (!user) {
             return NextResponse.json({ error: 'No user found' }, { status: 404 });
+        }
+
+        // Cleanup: delete previous sessions and their telemetry points
+        const oldSessions = await Session.find({ userId: user._id }).select('_id').lean();
+        if (oldSessions.length > 0) {
+            const oldIds = oldSessions.map(s => s._id);
+            await TelemetryPoint.deleteMany({ sessionId: { $in: oldIds } });
+            await Session.deleteMany({ _id: { $in: oldIds } });
+            console.log(`Deleted ${oldIds.length} old sessions for user: ${user.email}`);
         }
 
         console.log(`Generating session for user: ${user.email}`);

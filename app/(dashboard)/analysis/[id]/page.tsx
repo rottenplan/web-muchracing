@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useMemo } from 'react';
+import { useState, useEffect, use, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import axios from 'axios';
@@ -15,6 +15,7 @@ import AIInsightsView from '@/components/analysis/AIInsightsView';
 export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
+    const autoInjectedRef = useRef(false);
 
     const [session, setSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -59,6 +60,21 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
         fetchSession();
     }, [id]);
 
+    // Auto-inject demo when session missing
+    useEffect(() => {
+        if (!loading && (error || !session) && !autoInjectedRef.current) {
+            autoInjectedRef.current = true;
+            (async () => {
+                try {
+                    const res = await fetch('/api/simulate/session');
+                    const json = await res.json();
+                    if (json?.success && json?.sessionId) {
+                        router.replace(`/analysis/${json.sessionId}`);
+                    }
+                } catch (e) { }
+            })();
+        }
+    }, [loading, error, session]);
     // Playback Ticker
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -111,27 +127,9 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
                     <p className="text-gray-400 text-xs font-medium uppercase tracking-tighter mb-8 leading-relaxed">
                         {error || 'The requested telemetry session could not be retrieved from the cloud storage.'}
                     </p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-3 rounded-xl font-racing text-xs tracking-[0.2em] transition-all hover:scale-[1.02]"
-                    >
-                        RETRY SYNC
-                    </button>
-                    <div className="h-3"></div>
-                    <button
-                        onClick={async () => {
-                            try {
-                                const res = await fetch('/api/simulate/session');
-                                const json = await res.json();
-                                if (json?.success && json?.sessionId) {
-                                    router.push(`/analysis/${json.sessionId}`);
-                                }
-                            } catch (e) {}
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 border border-blue-500/50 text-white px-8 py-3 rounded-xl font-racing text-xs tracking-[0.2em] transition-all hover:scale-[1.02]"
-                    >
-                        GENERATE DEMO SESSION
-                    </button>
+                    <div className="w-full bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-racing text-[10px] tracking-[0.2em]">
+                        AUTO-INJECTING DEMO SESSION...
+                    </div>
                 </div>
             </div>
         );
