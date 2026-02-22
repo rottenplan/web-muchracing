@@ -100,7 +100,7 @@ export async function GET() {
 
         const session = await Session.create({
             userId: user._id,
-            name: `Sentul Karting Practice - 12 Laps`,
+            name: '',
             originalFilename: 'sentul_karting_12laps.csv',
             startTime: new Date(startTime),
             endTime: new Date(currentTime),

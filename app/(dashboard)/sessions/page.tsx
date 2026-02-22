@@ -25,15 +25,7 @@ async function getSessions() {
         }));
     } catch (error) {
         console.error('Error fetching real sessions, falling back to mock:', error);
-        return [{
-            id: "mock_session_id",
-            name: "Sentul Karting Practice - 12 Laps",
-            startTime: new Date(Date.now() - 3600000),
-            stats: {
-                lapCount: 12,
-                bestLap: 55.823
-            }
-        }];
+        return [];
     }
 }
 
