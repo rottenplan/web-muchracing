@@ -24,8 +24,9 @@ const TrackDetailMap = ({ center, path }: TrackDetailMapProps) => {
             zoomControl={false}
         >
             <TileLayer
-                url="https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}"
+                url="https://mt{s}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}"
                 attribution='&copy; Google Maps'
+                subdomains={['0', '1', '2', '3']}
             />
             <MapController center={center} />
 

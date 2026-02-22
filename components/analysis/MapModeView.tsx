@@ -12,7 +12,17 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet';
+
+function MapController({ center }: { center: [number, number] }) {
+    const map = useMap();
+    useEffect(() => {
+        if (center) {
+            map.setView(center, map.getZoom());
+        }
+    }, [center, map]);
+    return null;
+}
 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -58,7 +68,7 @@ export default function MapModeView({
     // Map Layers
     const layers: Record<string, { url: string; attribution: string }> = {
         'Satellite': {
-            url: 'https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+            url: 'https://mt{s}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
             attribution: '&copy; Google Maps'
         },
         'OpenStreetMap': {
@@ -134,7 +144,13 @@ export default function MapModeView({
                     style={{ height: '100%', width: '100%', background: '#0a0a0a' }}
                     scrollWheelZoom={true}
                 >
-                    <TileLayer url={layers[selectedLayer].url} attribution={layers[selectedLayer].attribution} />
+                    <TileLayer
+                        key={selectedLayer}
+                        url={layers[selectedLayer].url}
+                        attribution={layers[selectedLayer].attribution}
+                        subdomains={selectedLayer === 'Satellite' ? ['0', '1', '2', '3'] : ['a', 'b', 'c']}
+                    />
+                    <MapController center={center as [number, number]} />
 
                     {/* Heatmap Segments (Speed) */}
                     {useMemo(() => {
@@ -289,6 +305,6 @@ export default function MapModeView({
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
