@@ -63,8 +63,8 @@ export default function MapModeView({
     // Map Layers
     const layers: Record<string, { url: string; attribution: string }> = {
         'Satellite': {
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            attribution: 'Tiles &copy; Esri'
+            url: 'https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+            attribution: '&copy; Google Maps'
         },
         'OpenStreetMap': {
             url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

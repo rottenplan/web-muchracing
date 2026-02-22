@@ -24,8 +24,8 @@ const TrackDetailMap = ({ center, path }: TrackDetailMapProps) => {
             zoomControl={false}
         >
             <TileLayer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                attribution='&copy; Esri'
+                url="https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}"
+                attribution='&copy; Google Maps'
             />
             <MapController center={center} />
 
