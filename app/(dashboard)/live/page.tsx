@@ -81,7 +81,7 @@ export default function LivePage() {
                     <div className="flex flex-col items-end">
                         <span className="text-[10px] uppercase font-bold text-gray-500 tracking-tighter">Frequency: <span className="text-blue-400">10Hz via MQTT</span></span>
                         <div className="text-[11px] font-data text-gray-400">
-                            {lastSync ? `SYNC: ${new Date(lastSync).toLocaleTimeString()}` : 'WAITING FOR DATA...'}
+                            {data?.timestamp ? `Last update: ${Math.max(0, Math.floor((Date.now() - data.timestamp) / 1000))}s ago` : (lastSync ? `SYNC: ${new Date(lastSync).toLocaleTimeString()}` : 'WAITING FOR DATA...')}
                         </div>
                     </div>
                 </div>

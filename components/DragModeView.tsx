@@ -115,6 +115,7 @@ export default function DragModeView() {
             {/* Connection Status & IP Control (Top Right Aboslute) */}
             <div className="absolute top-4 right-4 z-10 flex gap-2 items-center">
                 <span className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                <span className="text-[10px] text-white/70 font-data">{data.timestamp ? `${Math.max(0, Math.floor((Date.now() - data.timestamp) / 1000))}s` : ''}</span>
                 <input
                     type="text"
                     value={ip}
