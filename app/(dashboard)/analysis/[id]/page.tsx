@@ -7,7 +7,7 @@ import axios from 'axios';
 import AnalysisHeader from '@/components/analysis/AnalysisHeader';
 import LapsSidebar from '@/components/analysis/LapsSidebar';
 import DataModeView from '@/components/analysis/DataModeView';
-import MapModeView from '@/components/analysis/MapModeView';
+import MapModeView from '@/components/analysis/MapModeViewWrapper';
 import DragSummaryView from '@/components/analysis/DragSummaryView';
 import AIInsightsView from '@/components/analysis/AIInsightsView';
 
