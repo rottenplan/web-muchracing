@@ -275,11 +275,11 @@ export default function MapModeView({
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">RPM</span>
-                            <span className="text-xl font-black text-orange-400 font-mono tabular-nums italic">{currentPoint.rpm || 0}</span>
+                            <span className="text-xl font-black text-orange-400 font-mono tabular-nums italic">{Math.round((currentPoint.rpm || 0) / 10) * 10}</span>
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">Suhu Air</span>
-                            <span className="text-xl font-black text-red-500 font-mono tabular-nums italic">{currentPoint.water || 0}°<span className="text-[10px] ml-0.5 uppercase not-italic text-white/50">C</span></span>
+                            <span className="text-xl font-black text-red-500 font-mono tabular-nums italic">{Math.round(currentPoint.water || 0)}°<span className="text-[10px] ml-0.5 uppercase not-italic text-white/50">C</span></span>
                         </div>
                     </div>
 
