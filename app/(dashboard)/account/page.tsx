@@ -19,6 +19,7 @@ import { countries as countriesList } from '@/data/countries';
 export default function AccountPage() {
     // User Data State
     const [profile, setProfile] = useState({
+        name: '',
         username: '',
         email: '',
         driverNumber: 0,
@@ -48,6 +49,7 @@ export default function AccountPage() {
                 const data = await response.json();
                 if (data.success) {
                     setProfile({
+                        name: data.user.name || '',
                         username: data.user.username || '',
                         email: data.user.email || '',
                         driverNumber: data.user.driverNumber || 0,
@@ -77,6 +79,7 @@ export default function AccountPage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    name: profile.name,
                     driverNumber: profile.driverNumber,
                     country: profile.country,
                     category: profile.category,
@@ -87,9 +90,9 @@ export default function AccountPage() {
 
             if (data.success) {
                 alert('Profile updated successfully!');
-                // Update local state with server response
                 setProfile({
                     ...profile,
+                    name: data.user.name || profile.name,
                     lastConnection: data.user.lastConnection
                 });
             } else {
@@ -159,13 +162,20 @@ export default function AccountPage() {
                                 {/* Avatar Circle */}
                                 <div className="w-20 h-20 rounded-full bg-background border-4 border-background shadow-xl flex items-center justify-center overflow-hidden shrink-0">
                                     <div className="w-full h-full bg-gradient-to-br from-warning to-highlight relative flex items-center justify-center">
-                                        <span className="text-background font-racing text-2xl font-bold">M</span>
+                                        <span className="text-background font-racing text-2xl font-bold">
+                                            {profile.name ? profile.name.charAt(0).toUpperCase() : profile.username.charAt(0).toUpperCase() || 'U'}
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div className="flex-1 text-center sm:text-left z-10">
-                                    <h2 className="text-2xl font-racing text-white">{profile.username}</h2>
+                                    <h2 className="text-2xl font-racing text-white">
+                                        {profile.name || profile.username}
+                                    </h2>
                                     <p className="text-white/80 text-sm">{profile.email}</p>
+                                    {profile.username && profile.name && (
+                                        <p className="text-white/60 text-xs mt-0.5">@{profile.username}</p>
+                                    )}
                                 </div>
 
                                 <div className="absolute bottom-2 right-4 text-xs text-white/60 font-data">
@@ -178,6 +188,21 @@ export default function AccountPage() {
                                 <h3 className="text-lg font-racing text-primary mb-4">ACCOUNT INFORMATION</h3>
 
                                 <form onSubmit={handleProfileUpdate} className="space-y-4">
+
+                                    {/* Driver Name (Editable) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                                        <label className="text-text-secondary font-medium text-sm md:text-right">Driver Name:</label>
+                                        <div className="md:col-span-3">
+                                            <input
+                                                type="text"
+                                                value={profile.name}
+                                                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                                maxLength={60}
+                                                placeholder="Your full driver name"
+                                                className="w-full bg-card-bg border border-border-color text-foreground rounded px-3 py-2 focus:outline-none focus:border-primary transition text-sm"
+                                            />
+                                        </div>
+                                    </div>
 
                                     {/* Username (Read-only) */}
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">

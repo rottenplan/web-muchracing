@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({
             success: true,
             user: {
+                name: user.name || '',
                 username: user.username || user.name || 'User',
                 email: user.email,
                 driverNumber: user.driverNumber,

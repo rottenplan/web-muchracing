@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest) {
         const body = await req.json();
 
         // Update allowed fields only
-        const allowedFields = ['driverNumber', 'country', 'category'];
+        const allowedFields = ['name', 'driverNumber', 'country', 'category'];
         const updates: any = {};
 
         for (const field of allowedFields) {
@@ -48,6 +48,7 @@ export async function PUT(req: NextRequest) {
             success: true,
             message: 'Profile updated successfully',
             user: {
+                name: updatedUser.name || '',
                 username: updatedUser.username || updatedUser.name,
                 email: updatedUser.email,
                 driverNumber: updatedUser.driverNumber,
