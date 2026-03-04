@@ -9,9 +9,8 @@ import ModuleTile from '@/components/ModuleTile';
 interface Session {
   _id: string;
   name: string;
+  sessionType?: 'TRACK' | 'DRAG';
   driver?: string;
-  city?: string;
-  category?: string;
   originalFilename: string;
   startTime: string;
   endTime: string;
@@ -142,65 +141,120 @@ export default function DashboardPage() {
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
                   <tr className="bg-[#2c3034] border-b border-white/5">
-                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">ID</th>
-                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">Driver</th>
+                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5 w-12">ID</th>
+                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5 w-20">Tipe</th>
                     <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">Tanggal</th>
-                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">Sirkuit</th>
-                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">Kota</th>
-                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">Kategori</th>
+                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5">Nama Sesi</th>
                     <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5 text-center">Lap</th>
-                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5 text-center">Best Lap</th>
+                    <th className="p-3 font-bold text-[#adb5bd] border-r border-white/5 text-center">Best</th>
                     <th className="p-3 font-bold text-[#adb5bd] text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {loading ? (
-                    <tr><td colSpan={9} className="p-10 text-center text-[#adb5bd]">Memuat sesi...</td></tr>
+                    <tr><td colSpan={7} className="p-10 text-center text-[#adb5bd]">Memuat sesi...</td></tr>
                   ) : displayedSessions.length === 0 ? (
-                    <tr><td colSpan={9} className="p-10 text-center text-[#adb5bd]">Sesi tidak ditemukan.</td></tr>
+                    <tr><td colSpan={7} className="p-10 text-center text-[#adb5bd]">Sesi tidak ditemukan.</td></tr>
                   ) : (
-                    displayedSessions.map((session, idx) => (
-                      <tr key={session._id} className="hover:bg-white/5 transition-colors group">
-                        <td className="p-3 border-r border-white/5 text-[#adb5bd]">{session._id.slice(-4)}</td>
-                        <td className="p-3 border-r border-white/5 text-white font-medium">{session.driver || 'FALAH'}</td>
-                        <td className="p-3 border-r border-white/5">
-                          <div className="flex items-center gap-1.5">
-                            <Link href={`/analysis/${session._id}`} className="text-[#5bc0de] hover:underline font-medium">
-                              {new Date(session.startTime).toLocaleString('id-ID')}
-                            </Link>
-                            <MapPin size={12} className="text-[#5bc0de]" />
-                            <Link href={`/sessions/${session._id}`} className="text-[#5bc0de] hover:underline">(peta)</Link>
-                          </div>
-                        </td>
-                        <td className="p-3 border-r border-white/5">
-                          <Link href={`/analysis/${session._id}`} className="text-[#5bc0de] hover:underline font-medium">
-                            {session.name || 'Sesi Tanpa Nama'}
-                          </Link>
-                        </td>
-                        <td className="p-3 border-r border-white/5 text-[#adb5bd]">{session.city || '-'}</td>
-                        <td className="p-3 border-r border-white/5 text-[#adb5bd] italic">{session.category || 'Vespa Tune Up'}</td>
-                        <td className="p-3 border-r border-white/5 text-center text-white">{session.stats?.lapCount || 0}</td>
-                        <td className="p-3 border-r border-white/5 text-center font-bold text-[#5bc0de]">
-                          {session.stats?.bestLap ? session.stats.bestLap.toFixed(3) : '00.000'}
-                        </td>
-                        <td className="p-3 text-center">
-                          <div className="flex justify-center gap-2">
-                            <Link href={`/analysis/${session._id}`} className="text-[#5bc0de] hover:text-white p-1 hover:bg-[#5bc0de]/10 border border-[#5bc0de]/20 rounded transition-all flex items-center gap-1" title="Analisis">
-                              <Activity size={12} />
-                              <span className="text-[10px] font-black uppercase">Analisis</span>
-                            </Link>
-                            <button className="text-[#adb5bd] hover:text-white p-1 hover:bg-white/10 rounded transition-all"><Edit size={14} /></button>
-                            <button
-                              onClick={() => handleDeleteSession(session._id)}
-                              className="text-[#ff4d4d]/70 hover:text-[#ff4d4d] p-1 hover:bg-white/10 rounded transition-all"
-                              title="Hapus Sesi"
+                    displayedSessions.map((session) => {
+                      const isDrag = session.sessionType === 'DRAG';
+                      const accentColor = isDrag ? '#ff4500' : '#5bc0de';
+                      return (
+                        <tr
+                          key={session._id}
+                          className={`hover:bg-white/5 transition-colors group border-l-2`}
+                          style={{ borderLeftColor: isDrag ? '#ff450055' : '#5bc0de55' }}
+                        >
+                          {/* ID */}
+                          <td className="p-3 border-r border-white/5 text-[#adb5bd] font-mono">{session._id.slice(-4)}</td>
+
+                          {/* Type Badge */}
+                          <td className="p-3 border-r border-white/5">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border ${isDrag
+                                ? 'bg-[#ff4500]/15 text-[#ff4500] border-[#ff4500]/30'
+                                : 'bg-[#5bc0de]/15 text-[#5bc0de] border-[#5bc0de]/30'
+                              }`}>
+                              {isDrag ? '⚡ DRAG' : '🏁 LAP'}
+                            </span>
+                          </td>
+
+                          {/* Date */}
+                          <td className="p-3 border-r border-white/5">
+                            <div className="flex items-center gap-1.5">
+                              <Link
+                                href={`/analysis/${session._id}`}
+                                className="hover:underline font-medium"
+                                style={{ color: accentColor }}
+                              >
+                                {new Date(session.startTime).toLocaleString('id-ID', {
+                                  day: '2-digit', month: '2-digit', year: 'numeric',
+                                  hour: '2-digit', minute: '2-digit'
+                                })}
+                              </Link>
+                            </div>
+                          </td>
+
+                          {/* Session Name */}
+                          <td className="p-3 border-r border-white/5">
+                            <Link
+                              href={`/analysis/${session._id}`}
+                              className="text-white hover:text-[#5bc0de] font-bold uppercase tracking-tight transition-all italic text-[11px]"
                             >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                              {session.name || (isDrag ? 'Drag Run' : 'Sesi Latihan')}
+                            </Link>
+                            {session.originalFilename && (
+                              <div className="text-[9px] text-[#adb5bd] mt-0.5 opacity-50 font-mono">{session.originalFilename}</div>
+                            )}
+                          </td>
+
+                          {/* Lap Count */}
+                          <td className="p-3 border-r border-white/5 text-center text-white font-bold">
+                            {isDrag ? <span className="text-[#adb5bd]">—</span> : (session.stats?.lapCount || 0)}
+                          </td>
+
+                          {/* Best Time */}
+                          <td className="p-3 border-r border-white/5 text-center">
+                            <span className="font-mono font-black text-xs" style={{ color: accentColor }}>
+                              {session.stats?.bestLap
+                                ? (isDrag
+                                  ? `${(session.stats.bestLap / 1000).toFixed(3)}s`
+                                  : `${session.stats.bestLap.toFixed(3)}s`)
+                                : '—'}
+                            </span>
+                            {session.stats?.bestLap && (
+                              <div className="text-[8px] text-[#adb5bd] mt-0.5 uppercase tracking-widest opacity-60">
+                                {isDrag ? 'drag time' : 'best lap'}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="p-3 text-center">
+                            <div className="flex justify-center gap-1.5">
+                              <Link
+                                href={`/analysis/${session._id}`}
+                                className={`text-xs px-2.5 py-1.5 rounded border flex items-center gap-1 transition-all font-black uppercase tracking-widest ${isDrag
+                                    ? 'text-[#ff4500] border-[#ff4500]/20 bg-[#ff4500]/10 hover:bg-[#ff4500] hover:text-white'
+                                    : 'text-[#5bc0de] border-[#5bc0de]/20 bg-[#5bc0de]/10 hover:bg-[#5bc0de] hover:text-white'
+                                  }`}
+                              >
+                                <Activity size={11} />
+                                Analisis
+                              </Link>
+                              <button className="text-[#adb5bd] hover:text-white p-1.5 hover:bg-white/10 rounded transition-all">
+                                <Edit size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSession(session._id)}
+                                className="text-[#ff4d4d]/60 hover:text-[#ff4d4d] p-1.5 hover:bg-white/10 rounded transition-all"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
