@@ -1,0 +1,22 @@
+{
+    "name": "Sentul International Karting Circuit",
+    "location": "Bogor, Indonesia",
+    "country": "Indonesia",
+    "length": 1200,
+    "startLine": {
+        "lat": -6.5252,
+        "lng": 106.8595,
+        "bearing": 180,
+        "width": 10
+    },
+    "sectors": [
+        {
+            "name": "S1",
+            "position": 0.33
+        },
+        {
+            "name": "S2",
+            "position": 0.66
+        }
+    ]
+}
