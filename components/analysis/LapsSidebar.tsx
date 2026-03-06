@@ -68,9 +68,22 @@ export default function LapsSidebar({ session, selectedLaps, toggleLap }: LapsSi
                 </div>
 
                 {laps.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">Zero Laps Detected</p>
-                    </div>
+                    session?.sessionType === 'DRAG' ? (
+                        <div
+                            className="group flex items-center gap-4 p-3 rounded-xl transition-all cursor-pointer select-none border bg-white/[0.07] border-white/10 shadow-xl"
+                        >
+                            <div className="w-1.5 h-6 rounded-full bg-blue-400"></div>
+                            <div className="w-5 font-racing text-[10px] text-gray-500 font-bold text-center">01</div>
+                            <div className="flex-1 font-data font-bold text-sm text-white flex items-center justify-between">
+                                <span className="text-blue-400 glow-text text-sm uppercase">DRAG RUN</span>
+                                <span className="text-[8px] font-racing text-blue-400 uppercase italic tracking-widest bg-blue-500/10 px-1.5 py-0.5 rounded">RESULTS READY</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">Zero Laps Detected</p>
+                        </div>
+                    )
                 ) : (
                     laps.map((lap: any) => {
                         const isSelected = selectedLaps.includes(lap.lapNumber);

@@ -154,18 +154,14 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
 
                 <main className="flex-1 glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative bg-black/40 flex flex-col">
                     {viewMode === 'data' ? (
-                        session.sessionType === 'DRAG' ? (
-                            <DragSummaryView session={session} />
-                        ) : (
-                            <DataModeView
-                                session={session}
-                                selectedLaps={selectedLaps}
-                                isPlaying={isPlaying}
-                                setIsPlaying={setIsPlaying}
-                                currentPointIndex={currentPointIndex}
-                                setCurrentPointIndex={setCurrentPointIndex}
-                            />
-                        )
+                        <DataModeView
+                            session={session}
+                            selectedLaps={selectedLaps}
+                            isPlaying={isPlaying}
+                            setIsPlaying={setIsPlaying}
+                            currentPointIndex={currentPointIndex}
+                            setCurrentPointIndex={setCurrentPointIndex}
+                        />
                     ) : viewMode === 'map' ? (
                         <MapModeView
                             session={session}

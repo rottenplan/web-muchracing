@@ -27,6 +27,8 @@ import {
     ReferenceLine
 } from 'recharts';
 
+import DragSummaryView from './DragSummaryView';
+
 interface DataModeViewProps {
     session: any;
     selectedLaps: number[];
@@ -44,6 +46,8 @@ export default function DataModeView({
     currentPointIndex,
     setCurrentPointIndex
 }: DataModeViewProps) {
+
+    const isDrag = session?.sessionType === 'DRAG';
 
     // Process session points into chart data
     const points = useMemo(() => {
@@ -74,7 +78,7 @@ export default function DataModeView({
 
     // Get current lap and its relative distance
     const currentLapInfo = useMemo(() => {
-        if (!points || points.length === 0) return null;
+        if (!points || points.length === 0 || isDrag) return null;
         const cp = points[currentPointIndex];
         const lap = laps.find((l: any, i: number) => {
             const startIdx = i === 0 ? 0 : laps[i - 1].pointIndex + 1;
@@ -87,7 +91,7 @@ export default function DataModeView({
         const relativeDist = (cp?.dist || 0) - lapStartDist;
 
         return { lapNumber: lap.lapNumber, relativeDist };
-    }, [currentPointIndex, points, laps]);
+    }, [currentPointIndex, points, laps, isDrag]);
 
     // Map Telemetry Data for Charts
     const chartData = useMemo(() => {
@@ -101,7 +105,7 @@ export default function DataModeView({
 
     // Format Lap Details for Table (Dynamic based on current position)
     const lapDetails = useMemo(() => {
-        if (!laps || !points.length) return [];
+        if (!laps || !points.length || isDrag) return [];
 
         const bestTime = Math.min(...laps.map((l: any) => l.lapTime));
         const relDist = currentLapInfo?.relativeDist || 0;
@@ -135,7 +139,7 @@ export default function DataModeView({
                 isActive: currentLapInfo?.lapNumber === l.lapNumber
             };
         });
-    }, [laps, points, currentLapInfo]);
+    }, [laps, points, currentLapInfo, isDrag]);
 
     return (
         <div className="flex-1 flex flex-col bg-[#1a1a1a] overflow-hidden text-white font-sans">
@@ -180,62 +184,68 @@ export default function DataModeView({
                     </div>
                 </div>
 
-                {/* Professional Data Table */}
-                <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl overflow-x-auto">
-                    <div className="bg-[#2c3034] min-w-[800px] grid grid-cols-8 gap-4 px-4 py-2 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
-                        <div className="flex items-center gap-2"><Trophy size={10} /> LAP</div>
-                        <div className="flex items-center gap-2"><Gauge size={10} /> Waktu</div>
-                        <div className="flex items-center gap-2"><MapPin size={10} /> Jarak (Lap)</div>
-                        <div className="flex items-center gap-2"><Zap size={10} /> Kecepatan</div>
-                        <div className="flex items-center gap-2"><Activity size={10} /> RPM</div>
-                        <div className="flex items-center gap-2"><Thermometer size={10} /> Water</div>
-                        <div className="flex items-center gap-2"><Thermometer size={10} /> EGT</div>
-                        <div className="flex items-center gap-2"><BarChart3 size={10} /> Gap</div>
+                {/* Conditional View: Drag Summary or Lap Table */}
+                {isDrag ? (
+                    <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl bg-[#212529]">
+                        <DragSummaryView session={session} />
                     </div>
+                ) : (
+                    <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl overflow-x-auto">
+                        <div className="bg-[#2c3034] min-w-[800px] grid grid-cols-8 gap-4 px-4 py-2 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
+                            <div className="flex items-center gap-2"><Trophy size={10} /> LAP</div>
+                            <div className="flex items-center gap-2"><Gauge size={10} /> Waktu</div>
+                            <div className="flex items-center gap-2"><MapPin size={10} /> Jarak (Lap)</div>
+                            <div className="flex items-center gap-2"><Zap size={10} /> Kecepatan</div>
+                            <div className="flex items-center gap-2"><Activity size={10} /> RPM</div>
+                            <div className="flex items-center gap-2"><Thermometer size={10} /> Water</div>
+                            <div className="flex items-center gap-2"><Thermometer size={10} /> EGT</div>
+                            <div className="flex items-center gap-2"><BarChart3 size={10} /> Gap</div>
+                        </div>
 
-                    <div className="divide-y divide-white/5 min-w-[800px]">
-                        {lapDetails.map((lap: any) => (
-                            <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.04] transition-colors group ${lap.isActive ? 'bg-[#5bc0de]/10 border-l-2 border-[#5bc0de]' : ''} ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
-                                <div className="text-sm font-sans font-bold flex items-center gap-2">
-                                    <div className="w-1 h-4 rounded-full" style={{ backgroundColor: lap.color }}></div>
-                                    <span style={{ color: lap.color }}>LAP {lap.id}</span>
-                                </div>
-                                <div className="text-white font-bold">{lap.time}</div>
-                                <div className="flex flex-col gap-1 text-[10px] text-[#adb5bd]">
-                                    <span>{(lap.dist / 1000).toFixed(3)} km</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-white/40 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.dist / lap.totalLapDist) * 100)}%` }}></div>
+                        <div className="divide-y divide-white/5 min-w-[800px]">
+                            {lapDetails.map((lap: any) => (
+                                <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.04] transition-colors group ${lap.isActive ? 'bg-[#5bc0de]/10 border-l-2 border-[#5bc0de]' : ''} ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
+                                    <div className="text-sm font-sans font-bold flex items-center gap-2">
+                                        <div className="w-1 h-4 rounded-full" style={{ backgroundColor: lap.color }}></div>
+                                        <span style={{ color: lap.color }}>LAP {lap.id}</span>
                                     </div>
-                                </div>
-                                <div className="flex flex-col gap-1 text-[10px] text-[#5bc0de]">
-                                    <span className="font-bold">{lap.speed.toFixed(1)} Km/h</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-[#5bc0de] transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.speed / 160) * 100)}%` }}></div>
+                                    <div className="text-white font-bold">{lap.time}</div>
+                                    <div className="flex flex-col gap-1 text-[10px] text-[#adb5bd]">
+                                        <span>{(lap.dist / 1000).toFixed(3)} km</span>
+                                        <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                            <div className="h-full bg-white/40 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.dist / lap.totalLapDist) * 100)}%` }}></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-col gap-1 text-[10px] text-orange-400">
-                                    <span className="font-bold">{lap.rpm} RPM</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-orange-400 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.rpm / 15000) * 100)}%` }}></div>
+                                    <div className="flex flex-col gap-1 text-[10px] text-[#5bc0de]">
+                                        <span className="font-bold">{lap.speed.toFixed(1)} Km/h</span>
+                                        <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                            <div className="h-full bg-[#5bc0de] transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.speed / 160) * 100)}%` }}></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-col gap-1 text-[10px] text-red-500">
-                                    <span>{lap.water}°C</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-red-500 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.water / 110) * 100)}%` }}></div>
+                                    <div className="flex flex-col gap-1 text-[10px] text-orange-400">
+                                        <span className="font-bold">{lap.rpm} RPM</span>
+                                        <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                            <div className="h-full bg-orange-400 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.rpm / 15000) * 100)}%` }}></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-col gap-1 text-[10px] text-yellow-400">
-                                    <span>{lap.egt || 0}°C</span>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
-                                        <div className="h-full bg-yellow-400 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.egt / 900) * 100)}%` }}></div>
+                                    <div className="flex flex-col gap-1 text-[10px] text-red-500">
+                                        <span>{lap.water}°C</span>
+                                        <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                            <div className="h-full bg-red-500 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.water / 110) * 100)}%` }}></div>
+                                        </div>
                                     </div>
+                                    <div className="flex flex-col gap-1 text-[10px] text-yellow-400">
+                                        <span>{lap.egt || 0}°C</span>
+                                        <div className="h-1 bg-white/5 rounded-full overflow-hidden w-20">
+                                            <div className="h-full bg-yellow-400 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (lap.egt / 900) * 100)}%` }}></div>
+                                        </div>
+                                    </div>
+                                    <div className={`text-xs font-bold ${lap.gap === '0 ms' ? 'text-[#adb5bd]' : 'text-green-400'}`}>{lap.gap}</div>
                                 </div>
-                                <div className={`text-xs font-bold ${lap.gap === '0 ms' ? 'text-[#adb5bd]' : 'text-green-400'}`}>{lap.gap}</div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Analysis Charts Area */}
@@ -246,7 +256,7 @@ export default function DataModeView({
                     dataKey="speed"
                     color="#5bc0de"
                     unit="Km/h"
-                    height={220}
+                    height={isDrag ? 300 : 220} // Taller chart for drag
                     currentIndex={currentPointIndex}
                     onHover={(idx: number) => setCurrentPointIndex(idx)}
                 />
@@ -256,7 +266,7 @@ export default function DataModeView({
                     data={chartData}
                     dataKey="rpm"
                     color="#f0ad4e"
-                    height={180}
+                    height={isDrag ? 250 : 180} // Taller chart for drag
                     currentIndex={currentPointIndex}
                     onHover={(idx: number) => setCurrentPointIndex(idx)}
                 />
