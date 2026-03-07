@@ -144,54 +144,54 @@ export default function DataModeView({
     return (
         <div className="flex-1 flex flex-col bg-[#1a1a1a] overflow-hidden text-white font-sans">
             {/* Header: Timer & Playback */}
-            <div className="bg-[#212529] border-b border-white/5 p-4 shrink-0 shadow-lg">
+            <div className="bg-[#212529] border-b border-white/5 p-3 shrink-0 shadow-lg">
                 <div className="flex items-center justify-between">
                     {/* Professional Timer */}
                     <div className="flex flex-col">
-                        <div className="bg-[#f0ad4e] text-black px-5 py-2 font-mono text-3xl font-black rounded shadow-[0_4px_0_0_#b07d32] tracking-widest min-w-[200px] text-center">
+                        <div className="bg-[#f0ad4e] text-black px-4 py-1 font-mono text-2xl font-black rounded shadow-[0_3px_0_0_#b07d32] tracking-widest min-w-[160px] text-center">
                             {currentPoint.formattedRelTime || '00:00.000'}
                         </div>
-                        <span className="text-[10px] text-[#adb5bd] mt-1 font-bold uppercase tracking-tighter text-center">Waktu Telemetri (Relatif)</span>
+                        <span className="text-[9px] text-[#adb5bd] mt-1 font-bold uppercase tracking-tighter text-center">Waktu Telemetri (Relatif)</span>
                     </div>
 
                     {/* Playback Controls */}
-                    <div className="bg-[#2c3034] rounded-lg border border-white/10 flex items-center p-1.5 gap-1 shadow-inner">
-                        <ControlButton icon={<SkipBack size={18} />} title="Awal" onClick={() => setCurrentPointIndex(0)} />
+                    <div className="bg-[#2c3034] rounded-lg border border-white/10 flex items-center p-1 gap-1 shadow-inner">
+                        <ControlButton icon={<SkipBack size={16} />} title="Awal" onClick={() => setCurrentPointIndex(0)} />
                         <button
                             onClick={() => setIsPlaying(!isPlaying)}
-                            className="w-10 h-10 bg-[#f0ad4e] text-black rounded-md flex items-center justify-center shadow-lg hover:bg-orange-400 transition-all active:scale-95"
+                            className="w-8 h-8 bg-[#f0ad4e] text-black rounded-md flex items-center justify-center shadow-lg hover:bg-orange-400 transition-all active:scale-95"
                         >
-                            {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                            {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
                         </button>
-                        <ControlButton icon={<SkipForward size={18} />} title="Akhir" onClick={() => setCurrentPointIndex(points.length - 1)} />
-                        <div className="w-px h-6 bg-white/10 mx-2"></div>
-                        <ControlButton icon={<RotateCcw size={16} />} title="Reset" onClick={() => setCurrentPointIndex(0)} />
-                        <ControlButton icon={<Settings size={16} />} title="Pengaturan" />
-                        <ControlButton icon={<Maximize2 size={16} />} title="Layar Penuh" />
+                        <ControlButton icon={<SkipForward size={16} />} title="Akhir" onClick={() => setCurrentPointIndex(points.length - 1)} />
+                        <div className="w-px h-5 bg-white/10 mx-1"></div>
+                        <ControlButton icon={<RotateCcw size={14} />} title="Reset" onClick={() => setCurrentPointIndex(0)} />
+                        <ControlButton icon={<Settings size={14} />} title="Pengaturan" />
+                        <ControlButton icon={<Maximize2 size={14} />} title="Layar Penuh" />
                     </div>
 
                     {/* Mini Map Navigation Preview */}
-                    <div className="hidden lg:block w-32 h-20 bg-black/40 rounded border border-white/5 relative overflow-hidden group">
+                    <div className="hidden lg:block w-28 h-14 bg-black/40 rounded border border-white/5 relative overflow-hidden group">
                         <div className="absolute inset-0 opacity-30 bg-black"></div>
-                        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full p-2">
+                        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full p-1.5">
                             {/* Simple path logic if we have points */}
                             <polyline
                                 points={points.slice(0, 50).map((p: any) => `${(p.lng % 0.01) * 10000},${(p.lat % 0.01) * 10000}`).join(' ')}
                                 fill="none" stroke="#5bc0de" strokeWidth="2"
                             />
                         </svg>
-                        <div className="absolute bottom-1 right-2 text-[8px] text-[#adb5bd] font-bold uppercase">{session.trackName || 'Sentul Circuit'}</div>
+                        <div className="absolute bottom-1 right-1 text-[7px] text-[#adb5bd] font-bold uppercase">{session.trackName || 'Sentul Circuit'}</div>
                     </div>
                 </div>
 
                 {/* Conditional View: Drag Summary or Lap Table */}
                 {isDrag ? (
-                    <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl bg-[#212529]">
+                    <div className="mt-3 border border-white/5 rounded-lg overflow-hidden shadow-2xl bg-[#212529]">
                         <DragSummaryView session={session} />
                     </div>
                 ) : (
-                    <div className="mt-6 border border-white/5 rounded-lg overflow-hidden shadow-2xl overflow-x-auto">
-                        <div className="bg-[#2c3034] min-w-[800px] grid grid-cols-8 gap-4 px-4 py-2 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
+                    <div className="mt-3 border border-white/5 rounded-lg overflow-hidden shadow-2xl overflow-x-auto">
+                        <div className="bg-[#2c3034] min-w-[800px] grid grid-cols-8 gap-4 px-4 py-1.5 font-bold text-[#adb5bd] uppercase tracking-widest text-[10px] border-b border-white/5">
                             <div className="flex items-center gap-2"><Trophy size={10} /> LAP</div>
                             <div className="flex items-center gap-2"><Gauge size={10} /> Waktu</div>
                             <div className="flex items-center gap-2"><MapPin size={10} /> Jarak (Lap)</div>
@@ -204,7 +204,7 @@ export default function DataModeView({
 
                         <div className="divide-y divide-white/5 min-w-[800px]">
                             {lapDetails.map((lap: any) => (
-                                <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-2.5 font-mono items-center hover:bg-white/[0.04] transition-colors group ${lap.isActive ? 'bg-[#5bc0de]/10 border-l-2 border-[#5bc0de]' : ''} ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
+                                <div key={lap.id} className={`bg-[#212529] grid grid-cols-8 gap-4 px-4 py-1.5 font-mono items-center hover:bg-white/[0.04] transition-colors group ${lap.isActive ? 'bg-[#5bc0de]/10 border-l-2 border-[#5bc0de]' : ''} ${selectedLaps.includes(lap.id) ? 'bg-white/[0.03]' : ''}`}>
                                     <div className="text-sm font-sans font-bold flex items-center gap-2">
                                         <div className="w-1 h-4 rounded-full" style={{ backgroundColor: lap.color }}></div>
                                         <span style={{ color: lap.color }}>LAP {lap.id}</span>
@@ -249,14 +249,14 @@ export default function DataModeView({
             </div>
 
             {/* Analysis Charts Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-[#1a1a1a]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide bg-[#1a1a1a]">
                 <AnalysisChart
                     title="Kecepatan (Km/h)"
                     data={chartData}
                     dataKey="speed"
                     color="#5bc0de"
                     unit="Km/h"
-                    height={isDrag ? 300 : 220} // Taller chart for drag
+                    height={isDrag ? 220 : 160} // Taller chart for drag
                     currentIndex={currentPointIndex}
                     onHover={(idx: number) => setCurrentPointIndex(idx)}
                 />
@@ -266,7 +266,7 @@ export default function DataModeView({
                     data={chartData}
                     dataKey="rpm"
                     color="#f0ad4e"
-                    height={isDrag ? 250 : 180} // Taller chart for drag
+                    height={isDrag ? 180 : 130} // Taller chart for drag
                     currentIndex={currentPointIndex}
                     onHover={(idx: number) => setCurrentPointIndex(idx)}
                 />
@@ -289,8 +289,8 @@ function ControlButton({ icon, title, onClick }: { icon: React.ReactNode; title:
 
 function AnalysisChart({ title, data, dataKey, color, height = 200, unit = '', currentIndex, onHover }: any) {
     return (
-        <div className="bg-[#212529]/50 rounded-xl border border-white/5 p-4 shadow-lg backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-2">
+        <div className="bg-[#212529]/50 rounded-xl border border-white/5 p-3 shadow-lg backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-bold text-[#adb5bd] uppercase tracking-widest">{title}</span>
             </div>
             <div style={{ height }} className="w-full">
