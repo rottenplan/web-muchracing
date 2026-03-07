@@ -8,7 +8,10 @@ import {
     Pause,
     Grid3X3,
     MousePointer2,
-    Search
+    Search,
+    SkipBack,
+    SkipForward,
+    RotateCcw
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
@@ -222,7 +225,7 @@ export default function MapModeView({
             <div className="bg-[#212529] border-t border-white/10 flex flex-col relative z-[1001] shadow-2xl">
                 {/* Visual Scrubber */}
                 <div
-                    className="h-12 relative overflow-hidden bg-black/40 group cursor-pointer hover:bg-black/60 transition-colors"
+                    className="h-10 relative overflow-hidden bg-black/40 group cursor-pointer hover:bg-black/60 transition-colors"
                     onClick={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const x = e.clientX - rect.left;
@@ -256,41 +259,47 @@ export default function MapModeView({
                 </div>
 
                 {/* Control Bar */}
-                <div className="h-20 bg-[#1a1a1a] flex items-center px-8 justify-between border-t border-white/5">
-                    <div className="flex items-center gap-8">
-                        {/* Play Button */}
-                        <button
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-all active:scale-95 ${isPlaying ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-[#5bc0de] text-white hover:bg-[#46a3bf] hover:scale-105'}`}
-                        >
-                            {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
-                        </button>
+                <div className="h-16 bg-[#1a1a1a] flex items-center px-6 justify-between border-t border-white/5">
+                    <div className="flex items-center gap-6">
+                        {/* Playback Controls (Aligned with Data Mode) */}
+                        <div className="bg-[#2c3034] rounded-lg border border-white/10 flex items-center p-1 gap-1 shadow-inner">
+                            <ControlButton icon={<SkipBack size={16} />} title="Awal" onClick={() => setCurrentPointIndex(0)} />
+                            <button
+                                onClick={() => setIsPlaying(!isPlaying)}
+                                className="w-8 h-8 bg-[#f0ad4e] text-black rounded-md flex items-center justify-center shadow-lg hover:bg-orange-400 transition-all active:scale-95"
+                            >
+                                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                            </button>
+                            <ControlButton icon={<SkipForward size={16} />} title="Akhir" onClick={() => setCurrentPointIndex(points.length - 1)} />
+                            <div className="w-px h-5 bg-white/10 mx-1"></div>
+                            <ControlButton icon={<RotateCcw size={14} />} title="Reset" onClick={() => setCurrentPointIndex(0)} />
+                        </div>
 
                         {/* Large Modern Timer */}
                         <div className="flex flex-col">
-                            <div className="text-3xl font-black font-mono text-white tracking-tighter leading-none tabular-nums italic">
+                            <div className="text-2xl font-black font-mono text-white tracking-tighter leading-none tabular-nums italic">
                                 {currentPoint.time || '00:00.000'}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-                                <span className="text-[10px] text-[#adb5bd] font-black uppercase tracking-widest">{isPlaying ? 'Live Tracking' : 'Paused'}</span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-widest">{isPlaying ? 'Live Tracking' : 'Paused'}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Live Snapshot Data */}
-                    <div className="flex gap-10">
+                    <div className="flex gap-8">
                         <div className="flex flex-col items-center">
-                            <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">Kecepatan</span>
-                            <span className="text-xl font-black text-[#5bc0de] font-mono tabular-nums italic">{currentPoint.speed?.toFixed(1) || 0}<span className="text-[10px] ml-1 uppercase not-italic text-white/50">Km/h</span></span>
+                            <span className="text-[8px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-0.5">Kecepatan</span>
+                            <span className="text-lg font-black text-[#5bc0de] font-mono tabular-nums italic">{currentPoint.speed?.toFixed(1) || 0}<span className="text-[9px] ml-1 uppercase not-italic text-white/50">Km/h</span></span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">RPM</span>
-                            <span className="text-xl font-black text-orange-400 font-mono tabular-nums italic">{Math.round((currentPoint.rpm || 0) / 10) * 10}</span>
+                            <span className="text-[8px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-0.5">RPM</span>
+                            <span className="text-lg font-black text-orange-400 font-mono tabular-nums italic">{Math.round((currentPoint.rpm || 0) / 10) * 10}</span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[9px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-1">Suhu Air</span>
-                            <span className="text-xl font-black text-red-500 font-mono tabular-nums italic">{Math.round(currentPoint.water || 0)}°<span className="text-[10px] ml-0.5 uppercase not-italic text-white/50">C</span></span>
+                            <span className="text-[8px] text-[#adb5bd] font-black uppercase tracking-[0.2em] mb-0.5">Suhu Air</span>
+                            <span className="text-lg font-black text-red-500 font-mono tabular-nums italic">{Math.round(currentPoint.water || 0)}°<span className="text-[9px] ml-0.5 uppercase not-italic text-white/50">C</span></span>
                         </div>
                     </div>
 
@@ -306,5 +315,17 @@ export default function MapModeView({
                 </div>
             </div>
         </div >
+    );
+}
+
+function ControlButton({ icon, title, onClick }: { icon: React.ReactNode; title: string, onClick?: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            className="p-1.5 hover:bg-white/10 rounded-md text-[#adb5bd] hover:text-white transition-all active:bg-white/5"
+            title={title}
+        >
+            {icon}
+        </button>
     );
 }
